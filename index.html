@@ -490,6 +490,34 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   letter-spacing: .04em;
 }
 
+/* Barra de orçamento por categoria */
+.cat-bar {
+  margin-top: 6px;
+  height: 5px;
+  background: var(--card-2);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.cat-bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width .25s ease;
+}
+.cat-bar-fill.near { background: var(--warning) !important; }
+.cat-bar-fill.over { background: var(--danger) !important; }
+
+.budget-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--card-2);
+  color: var(--muted);
+}
+.budget-badge.near { background: rgba(217,119,6,.15); color: var(--warning); }
+.budget-badge.over { background: rgba(220,38,38,.15); color: var(--danger); }
+
 /* Banner de lançamentos automáticos */
 .auto-banner {
   display: flex;
@@ -1200,6 +1228,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
         <option value="receita">Receita</option>
       </select>
     </div>
+    <div class="modal-section" id="sec-cat-budget">
+      <label>Orçamento mensal (opcional)</label>
+      <input type="text" inputmode="decimal" id="cat-budget" placeholder="R$ 0,00 — deixe em branco se não tem limite">
+    </div>
     <div class="modal-section">
       <label>Cor</label>
       <div class="color-picker" id="cat-cores"></div>
@@ -1685,10 +1717,25 @@ function gastosPorCategoria(mes) {
     const k = l.categoriaId || 'sem';
     map[k] = (map[k] || 0) + l.valor;
   }
+  // Inclui categorias com budget mesmo que ainda não tenham gastos no mês
+  for (const cat of DB.categorias) {
+    if (cat.tipo === 'despesa' && cat.budget && cat.budget > 0 && !(cat.id in map)) {
+      map[cat.id] = 0;
+    }
+  }
   return Object.entries(map)
     .map(([catId, valor]) => {
       const cat = DB.categorias.find(c => c.id === catId);
-      return { catId, nome: cat?.nome || 'Sem categoria', cor: cat?.cor || '#94a3b8', valor: round2(valor) };
+      const budget = cat?.budget || 0;
+      const pctBudget = budget > 0 ? Math.round(valor / budget * 100) : null;
+      return {
+        catId,
+        nome: cat?.nome || 'Sem categoria',
+        cor: cat?.cor || '#94a3b8',
+        valor: round2(valor),
+        budget: round2(budget),
+        pctBudget
+      };
     })
     .sort((a,b) => b.valor - a.valor);
 }
@@ -1749,15 +1796,31 @@ function renderInicio() {
     catEl.innerHTML = '<div class="card" style="text-align:center;color:var(--muted);font-size:13px;">Sem despesas neste mês</div>';
   } else {
     catEl.innerHTML = '<div class="list">' + cats.map(c => {
-      const pct = totalDespesa ? Math.round(c.valor / totalDespesa * 100) : 0;
+      const pctMes = totalDespesa ? Math.round(c.valor / totalDespesa * 100) : 0;
+      const temBudget = c.budget > 0;
+      const pctB = c.pctBudget || 0;
+      const estouro = pctB > 100 ? 'over' : (pctB >= 80 ? 'near' : '');
+      const badge = temBudget && pctB >= 80
+        ? `<span class="budget-badge ${estouro || 'near'}">${pctB > 100 ? `${pctB - 100}% além` : `${pctB}%`}</span>`
+        : '';
+      const sub = temBudget
+        ? `${fmtBRL(c.valor)} de ${fmtBRL(c.budget)}`
+        : `${pctMes}% do mês`;
+      const barra = temBudget
+        ? `<div class="cat-bar"><div class="cat-bar-fill ${estouro}" style="width:${Math.min(100, pctB)}%;background:${esc(c.cor)};"></div></div>`
+        : '';
+      const valorLinha = temBudget
+        ? `<div class="li-valor neg" style="font-size:13px;">${badge}</div>`
+        : `<div class="li-valor neg">${fmtBRL(c.valor)}</div>`;
       return `
         <div class="list-item">
           <div class="li-icon" style="background:${esc(c.cor)};">${esc(c.nome.charAt(0).toUpperCase())}</div>
           <div class="li-body">
             <div class="li-title">${esc(c.nome)}</div>
-            <div class="li-sub">${pct}% do mês</div>
+            <div class="li-sub">${esc(sub)}</div>
+            ${barra}
           </div>
-          <div class="li-right"><div class="li-valor neg">${fmtBRL(c.valor)}</div></div>
+          <div class="li-right">${valorLinha}</div>
         </div>`;
     }).join('') + '</div>';
   }
@@ -2690,12 +2753,19 @@ function renderConfigCategorias() {
   }).join('');
 }
 
+function _atualizarBudgetVisible() {
+  const tipo = document.getElementById('cat-tipo').value;
+  document.getElementById('sec-cat-budget').style.display = tipo === 'despesa' ? '' : 'none';
+}
+
 function abrirCategoriaNova() {
   editingCategoriaId = null;
   document.getElementById('cat-modal-title').textContent = 'Nova categoria';
   document.getElementById('cat-nome').value = '';
   document.getElementById('cat-tipo').value = 'despesa';
+  document.getElementById('cat-budget').value = '';
   document.getElementById('cat-excluir').style.display = 'none';
+  _atualizarBudgetVisible();
   selectedCorCat = CORES[Math.floor(Math.random() * CORES.length)];
   renderColorPicker('cat-cores', selectedCorCat, c => selectedCorCat = c);
   openModal('modal-categoria');
@@ -2708,16 +2778,29 @@ function abrirCategoria(id) {
   document.getElementById('cat-modal-title').textContent = 'Editar categoria';
   document.getElementById('cat-nome').value = c.nome;
   document.getElementById('cat-tipo').value = c.tipo;
+  document.getElementById('cat-budget').value = c.budget ? c.budget.toString().replace('.', ',') : '';
   document.getElementById('cat-excluir').style.display = 'block';
+  _atualizarBudgetVisible();
   selectedCorCat = c.cor;
   renderColorPicker('cat-cores', selectedCorCat, x => selectedCorCat = x);
   openModal('modal-categoria');
 }
 
+document.getElementById('cat-tipo').addEventListener('change', _atualizarBudgetVisible);
+
 document.getElementById('cat-salvar').addEventListener('click', async () => {
   const nome = document.getElementById('cat-nome').value.trim();
   if (!nome) { toast('Informe um nome'); return; }
   const tipo = document.getElementById('cat-tipo').value;
+  const rawBudget = document.getElementById('cat-budget').value.trim();
+  let budget = null;
+  if (tipo === 'despesa' && rawBudget) {
+    budget = parseValor(rawBudget);
+    if (budget === 0 && !/^[0,.\s]*$/.test(rawBudget)) {
+      toast('Orçamento inválido'); return;
+    }
+    if (budget === 0) budget = null;
+  }
   if (editingCategoriaId) {
     const c = DB.categorias.find(x => x.id === editingCategoriaId);
     if (c.tipo !== tipo) {
@@ -2730,9 +2813,9 @@ document.getElementById('cat-salvar').addEventListener('click', async () => {
         if (!ok) return;
       }
     }
-    Object.assign(c, { nome, tipo, cor: selectedCorCat });
+    Object.assign(c, { nome, tipo, cor: selectedCorCat, budget });
   } else {
-    DB.categorias.push({ id: uid(), nome, tipo, cor: selectedCorCat });
+    DB.categorias.push({ id: uid(), nome, tipo, cor: selectedCorCat, budget });
   }
   saveDB();
   closeModal('modal-categoria');
