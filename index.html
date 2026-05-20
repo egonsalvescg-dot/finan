@@ -2034,23 +2034,35 @@ document.getElementById('p-confirmar').addEventListener('click', () => {
   const data = document.getElementById('p-data').value || hoje();
   const contaId = document.getElementById('p-conta').value;
   if (!contaId) { toast('Selecione uma conta'); return; }
-  DB.lancamentos.push({
-    id: uid(),
-    tipo: 'despesa',
-    valor,
-    data,
-    descricao: r.nome,
-    contaId,
-    categoriaId: r.categoriaId || null,
-    bemId: r.bemId || null,
-    recorrenciaId: r.id,
-    criadoEm: Date.now()
-  });
+  // Idempotência: se já existe pagamento desta recorrência no mês da data, atualiza
+  const mesDest = data.slice(0, 7);
+  const existente = DB.lancamentos.find(l =>
+    l.recorrenciaId === r.id && mesPertence(l.data, mesDest)
+  );
+  if (existente) {
+    existente.valor = valor;
+    existente.data = data;
+    existente.contaId = contaId;
+    toast('Pagamento atualizado');
+  } else {
+    DB.lancamentos.push({
+      id: uid(),
+      tipo: 'despesa',
+      valor,
+      data,
+      descricao: r.nome,
+      contaId,
+      categoriaId: r.categoriaId || null,
+      bemId: r.bemId || null,
+      recorrenciaId: r.id,
+      criadoEm: Date.now()
+    });
+    toast('Pagamento registrado');
+  }
   saveDB();
   closeModal('modal-pagar');
   renderListaFixas();
   render();
-  toast('Pagamento registrado');
 });
 
 document.getElementById('p-editar').addEventListener('click', () => {
@@ -2203,7 +2215,9 @@ document.getElementById('file-importar').addEventListener('change', e => {
 document.getElementById('btn-reset').addEventListener('click', () => {
   if (!confirm('Apagar TODOS os dados? Não tem como desfazer.')) return;
   if (!confirm('Tem certeza mesmo? Faça um backup antes.')) return;
-  localStorage.removeItem(DB_KEY);
+  // Remove TODAS as chaves do app (DB, PIN, salt, bloqueios)
+  const chaves = Object.keys(localStorage).filter(k => k.startsWith('financas:'));
+  for (const k of chaves) localStorage.removeItem(k);
   DB = loadDB();
   saveDB();
   closeModal('modal-config');
@@ -2243,13 +2257,37 @@ document.getElementById('l-valor').addEventListener('input', e => {
 /* ============================================================
    PIN / LOCK SCREEN
    ============================================================ */
+const CRYPTO_OK = typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function';
+const LOCK_BLOCK_KEY = 'financas:lockBlock:v1';
+const LOCK_FAILS_KEY = 'financas:lockFails:v1';
+
 let lockBuffer = '';
 let lockMode = 'unlock'; // 'unlock' | 'set-new' | 'set-confirm' | 'change-current' | 'remove-current'
 let lockTempPin = '';
-let lockFailures = 0;
-let lockBlockedUntil = 0;
+let lockCompleteTimer = null;
+
+function getLockFailures() {
+  return parseInt(localStorage.getItem(LOCK_FAILS_KEY) || '0', 10) || 0;
+}
+function setLockFailures(n) {
+  if (n <= 0) localStorage.removeItem(LOCK_FAILS_KEY);
+  else localStorage.setItem(LOCK_FAILS_KEY, String(n));
+}
+function getLockBlockedUntil() {
+  const ts = parseInt(localStorage.getItem(LOCK_BLOCK_KEY) || '0', 10) || 0;
+  if (ts && ts < Date.now()) {
+    localStorage.removeItem(LOCK_BLOCK_KEY);
+    return 0;
+  }
+  return ts;
+}
+function setLockBlockedUntil(ts) {
+  if (!ts || ts < Date.now()) localStorage.removeItem(LOCK_BLOCK_KEY);
+  else localStorage.setItem(LOCK_BLOCK_KEY, String(ts));
+}
 
 async function sha256(str) {
+  if (!CRYPTO_OK) throw new Error('Crypto não disponível neste contexto (precisa HTTPS)');
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
@@ -2284,6 +2322,7 @@ function hideLock() {
   lockBuffer = '';
   lockMode = 'unlock';
   lockTempPin = '';
+  clearTimeout(lockCompleteTimer);
 }
 
 function updateLockDots() {
@@ -2298,72 +2337,88 @@ function shakeLock() {
 }
 
 async function handlePinComplete() {
-  if (lockMode === 'unlock' || lockMode === 'change-current' || lockMode === 'remove-current') {
-    const stored = localStorage.getItem(PIN_KEY);
-    const tryHash = await hashPin(lockBuffer);
-    if (tryHash === stored) {
-      lockFailures = 0;
-      if (lockMode === 'unlock') {
-        hideLock();
-      } else if (lockMode === 'change-current') {
-        showLock('set-new');
-      } else if (lockMode === 'remove-current') {
-        localStorage.removeItem(PIN_KEY);
+  try {
+    if (!CRYPTO_OK) {
+      toast('PIN indisponível neste contexto (precisa HTTPS)');
+      hideLock();
+      return;
+    }
+    if (lockBuffer.length !== 4) return; // race guard: usuário pode ter apagado depois do agendamento
+
+    if (lockMode === 'unlock' || lockMode === 'change-current' || lockMode === 'remove-current') {
+      const stored = localStorage.getItem(PIN_KEY);
+      const tryHash = await hashPin(lockBuffer);
+      if (tryHash === stored) {
+        setLockFailures(0);
+        setLockBlockedUntil(0);
+        if (lockMode === 'unlock') {
+          hideLock();
+        } else if (lockMode === 'change-current') {
+          showLock('set-new');
+        } else if (lockMode === 'remove-current') {
+          localStorage.removeItem(PIN_KEY);
+          hideLock();
+          renderPinStatus();
+          toast('PIN desativado');
+        }
+      } else {
+        const fails = getLockFailures() + 1;
+        setLockFailures(fails);
+        lockBuffer = '';
+        updateLockDots();
+        shakeLock();
+        if (fails >= 5) {
+          const until = Date.now() + 30000;
+          setLockBlockedUntil(until);
+          document.getElementById('lock-subtitle').textContent = 'Tente novamente em 30s';
+        }
+      }
+    } else if (lockMode === 'set-new') {
+      lockTempPin = lockBuffer;
+      showLock('set-confirm');
+    } else if (lockMode === 'set-confirm') {
+      if (lockBuffer === lockTempPin) {
+        const hash = await hashPin(lockBuffer);
+        localStorage.setItem(PIN_KEY, hash);
         hideLock();
         renderPinStatus();
-        toast('PIN desativado');
-      }
-    } else {
-      lockFailures++;
-      lockBuffer = '';
-      updateLockDots();
-      shakeLock();
-      if (lockFailures >= 5) {
-        lockBlockedUntil = Date.now() + 30000;
-        document.getElementById('lock-subtitle').textContent = 'Tente novamente em 30s';
-        setTimeout(() => {
-          if (Date.now() >= lockBlockedUntil) {
-            lockFailures = 0;
-            showLock(lockMode);
-          }
-        }, 30000);
+        toast('PIN ativado');
+      } else {
+        lockBuffer = '';
+        updateLockDots();
+        shakeLock();
+        document.getElementById('lock-subtitle').textContent = 'PINs não conferem. Tente de novo.';
+        setTimeout(() => showLock('set-new'), 800);
       }
     }
-  } else if (lockMode === 'set-new') {
-    lockTempPin = lockBuffer;
-    showLock('set-confirm');
-  } else if (lockMode === 'set-confirm') {
-    if (lockBuffer === lockTempPin) {
-      const hash = await hashPin(lockBuffer);
-      localStorage.setItem(PIN_KEY, hash);
-      hideLock();
-      renderPinStatus();
-      toast('PIN ativado');
-    } else {
-      lockBuffer = '';
-      updateLockDots();
-      shakeLock();
-      document.getElementById('lock-subtitle').textContent = 'PINs não conferem. Tente de novo.';
-      setTimeout(() => showLock('set-new'), 800);
-    }
+  } catch (err) {
+    console.error('Erro no PIN', err);
+    toast('Erro ao verificar PIN');
+    lockBuffer = '';
+    updateLockDots();
   }
 }
 
 document.querySelectorAll('#lock-pad .pad-key').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    if (Date.now() < lockBlockedUntil) return;
+  btn.addEventListener('click', () => {
+    if (Date.now() < getLockBlockedUntil()) return;
     const k = btn.dataset.key;
     if (k === 'del') {
       lockBuffer = lockBuffer.slice(0, -1);
+      clearTimeout(lockCompleteTimer);  // cancela completion pendente
       updateLockDots();
     } else if (k === 'cancel') {
+      clearTimeout(lockCompleteTimer);
       hideLock();
     } else if (/^\d$/.test(k)) {
       if (lockBuffer.length >= 4) return;
       lockBuffer += k;
       updateLockDots();
       if (lockBuffer.length === 4) {
-        setTimeout(handlePinComplete, 120);
+        clearTimeout(lockCompleteTimer);
+        lockCompleteTimer = setTimeout(() => {
+          if (lockBuffer.length === 4) handlePinComplete();
+        }, 120);
       }
     }
   });
@@ -2380,6 +2435,10 @@ function renderPinStatus() {
 }
 
 document.getElementById('btn-pin-toggle').addEventListener('click', () => {
+  if (!CRYPTO_OK && !hasPin()) {
+    toast('PIN requer HTTPS (servir o app em https://)');
+    return;
+  }
   closeModal('modal-config');
   if (hasPin()) showLock('remove-current');
   else showLock('set-new');
