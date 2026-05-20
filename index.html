@@ -1091,8 +1091,19 @@ function saveDB() {
   try {
     localStorage.setItem(DB_KEY, JSON.stringify(DB));
   } catch (e) {
-    toast('Erro ao salvar');
-    console.error(e);
+    const isQuota = e && (
+      e.name === 'QuotaExceededError' ||
+      e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+      e.code === 22 || e.code === 1014
+    );
+    if (isQuota) {
+      console.error('Quota exceeded', e);
+      toast('Armazenamento cheio — exporte e apague antigos');
+      alert('O armazenamento local atingiu o limite (~5MB).\n\nFaça o seguinte:\n1. Configurações → Exportar (JSON)\n2. Guarde o arquivo em local seguro\n3. Considere apagar lançamentos antigos');
+    } else {
+      console.error('Erro ao salvar', e);
+      toast('Erro ao salvar');
+    }
   }
 }
 
@@ -1105,14 +1116,33 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function round2(n) {
+  return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
 function fmtBRL(n) {
-  return (n || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  return round2(n || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
 }
 
 function parseValor(s) {
-  if (typeof s === 'number') return s;
-  s = String(s||'').replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
-  return parseFloat(s) || 0;
+  if (typeof s === 'number') return round2(Math.abs(s));
+  let str = String(s||'').trim().replace(/[^\d,.\-]/g, '').replace(/-/g, '');
+  if (!str) return 0;
+  if (str.includes(',')) {
+    // vírgula é decimal; pontos viram milhares (removidos)
+    str = str.replace(/\./g, '').replace(',', '.');
+  } else {
+    const parts = str.split('.');
+    if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+      // múltiplos pontos ou ponto seguido de 3 dígitos = separador de milhar
+      str = parts.join('');
+    }
+    // senão, ponto é decimal (ex: "1.5" = 1.50)
+  }
+  const n = parseFloat(str);
+  return Number.isFinite(n) ? round2(Math.abs(n)) : 0;
 }
 
 function fmtData(iso) {
@@ -1122,10 +1152,13 @@ function fmtData(iso) {
 }
 
 function mesIso(d = new Date()) {
-  return d.toISOString().slice(0,7);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
 }
 
-function hoje() { return new Date().toISOString().slice(0,10); }
+function hoje() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
 
 function mesPertence(iso, mes) { return iso && iso.slice(0,7) === mes; }
 
@@ -1174,7 +1207,7 @@ function saldoConta(contaId, ateMes = null) {
       s -= l.valor;
     }
   }
-  return s;
+  return round2(s);
 }
 
 function valorBem(bemId, ateMes = null) {
@@ -1186,7 +1219,7 @@ function valorBem(bemId, ateMes = null) {
     if (limite && l.data > limite) continue;
     if (l.tipo === 'investimento' && l.bemId === bemId) v += l.valor;
   }
-  return v;
+  return round2(v);
 }
 
 function totalInvestidoBem(bemId) {
@@ -1194,7 +1227,7 @@ function totalInvestidoBem(bemId) {
   for (const l of DB.lancamentos) {
     if (l.tipo === 'investimento' && l.bemId === bemId) t += l.valor;
   }
-  return t;
+  return round2(t);
 }
 
 function gastosBem(bemId, mes = null) {
@@ -1204,14 +1237,14 @@ function gastosBem(bemId, mes = null) {
       if (!mes || mesPertence(l.data, mes)) t += l.valor;
     }
   }
-  return t;
+  return round2(t);
 }
 
 function patrimonioTotal() {
   let total = 0;
   for (const c of DB.contas) total += saldoConta(c.id);
   for (const b of DB.bens) total += valorBem(b.id);
-  return total;
+  return round2(total);
 }
 
 function totaisDoMes(mes) {
@@ -1225,7 +1258,14 @@ function totaisDoMes(mes) {
     }
     else if (l.tipo === 'investimento') invest += l.valor;
   }
-  return { receitas, despesas, invest, fixas, variaveis: despesas - fixas, saldo: receitas - despesas };
+  return {
+    receitas: round2(receitas),
+    despesas: round2(despesas),
+    invest: round2(invest),
+    fixas: round2(fixas),
+    variaveis: round2(despesas - fixas),
+    saldo: round2(receitas - despesas)
+  };
 }
 
 function recorrenciaPaga(rId, mes) {
@@ -1233,7 +1273,7 @@ function recorrenciaPaga(rId, mes) {
 }
 
 function totalRecorrenciasMes() {
-  return DB.recorrencias.filter(r => r.ativa).reduce((s, r) => s + (r.valor || 0), 0);
+  return round2(DB.recorrencias.filter(r => r.ativa).reduce((s, r) => s + (r.valor || 0), 0));
 }
 
 function diaSeguroNoMes(mes, dia) {
@@ -1253,7 +1293,7 @@ function gastosPorCategoria(mes) {
   return Object.entries(map)
     .map(([catId, valor]) => {
       const cat = DB.categorias.find(c => c.id === catId);
-      return { catId, nome: cat?.nome || 'Sem categoria', cor: cat?.cor || '#94a3b8', valor };
+      return { catId, nome: cat?.nome || 'Sem categoria', cor: cat?.cor || '#94a3b8', valor: round2(valor) };
     })
     .sort((a,b) => b.valor - a.valor);
 }
@@ -1328,7 +1368,7 @@ function renderInicio() {
   // últimos
   const ult = [...DB.lancamentos]
     .filter(l => mesPertence(l.data, currentMes))
-    .sort((a,b) => (b.data + b.id).localeCompare(a.data + a.id))
+    .sort((a,b) => (b.data || '').localeCompare(a.data || '') || (b.criadoEm || 0) - (a.criadoEm || 0))
     .slice(0, 5);
   document.getElementById('ultimos-lancamentos').innerHTML = ult.length
     ? '<div class="list">' + ult.map(lancItemHTML).join('') + '</div>'
@@ -1406,7 +1446,7 @@ function renderLancamentos() {
   const lista = [...DB.lancamentos]
     .filter(l => mesPertence(l.data, currentMes))
     .filter(l => currentLancFilter === 'todos' || l.tipo === currentLancFilter)
-    .sort((a,b) => (b.data + b.id).localeCompare(a.data + a.id));
+    .sort((a,b) => (b.data || '').localeCompare(a.data || '') || (b.criadoEm || 0) - (a.criadoEm || 0));
   const el = document.getElementById('lancamentos-lista');
   if (!lista.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">◌</div><div class="empty-msg">Nenhum lançamento</div></div>';
@@ -1587,14 +1627,22 @@ document.getElementById('l-salvar').addEventListener('click', () => {
   const data = document.getElementById('l-data').value || hoje();
   const descricao = document.getElementById('l-descricao').value.trim();
 
+  const original = editingLancId ? DB.lancamentos.find(x => x.id === editingLancId) : null;
   const l = {
+    ...(original || {}),
     id: editingLancId || uid(),
     tipo: currentTipoLanc,
     valor,
     data,
     descricao,
-    criadoEm: editingLancId ? (DB.lancamentos.find(x => x.id === editingLancId)?.criadoEm || Date.now()) : Date.now()
+    criadoEm: original?.criadoEm || Date.now()
   };
+
+  // Limpa campos órfãos se o tipo mudou
+  if (original && original.tipo !== currentTipoLanc) {
+    delete l.contaId; delete l.categoriaId; delete l.bemId;
+    delete l.contaOrigemId; delete l.contaDestinoId;
+  }
 
   if (currentTipoLanc === 'receita' || currentTipoLanc === 'despesa') {
     l.contaId = document.getElementById('l-conta').value;
@@ -1602,17 +1650,22 @@ document.getElementById('l-salvar').addEventListener('click', () => {
     if (!l.contaId) { toast('Selecione uma conta'); return; }
     if (currentTipoLanc === 'despesa') {
       l.bemId = document.getElementById('l-bem-link').value || null;
+    } else {
+      delete l.bemId;
     }
+    delete l.contaOrigemId; delete l.contaDestinoId;
   } else if (currentTipoLanc === 'transferencia') {
     l.contaOrigemId = document.getElementById('l-origem').value;
     l.contaDestinoId = document.getElementById('l-destino').value;
     if (!l.contaOrigemId || !l.contaDestinoId) { toast('Selecione as contas'); return; }
-    if (l.contaOrigemId === l.contaDestinoId) { toast('Origem e destino diferentes'); return; }
+    if (l.contaOrigemId === l.contaDestinoId) { toast('Origem e destino devem ser diferentes'); return; }
+    delete l.contaId; delete l.categoriaId; delete l.bemId;
   } else if (currentTipoLanc === 'investimento') {
     l.contaOrigemId = document.getElementById('l-origem').value;
     l.bemId = document.getElementById('l-bem').value;
     if (!l.contaOrigemId) { toast('Selecione a conta de origem'); return; }
     if (!l.bemId) { toast('Selecione um bem (ou cadastre)'); return; }
+    delete l.contaId; delete l.categoriaId; delete l.contaDestinoId;
   }
 
   if (editingLancId) {
@@ -1629,8 +1682,14 @@ document.getElementById('l-salvar').addEventListener('click', () => {
 
 document.getElementById('l-excluir').addEventListener('click', () => {
   if (!editingLancId) return;
+  const idToDelete = editingLancId;
   if (!confirm('Excluir este lançamento?')) return;
-  DB.lancamentos = DB.lancamentos.filter(l => l.id !== editingLancId);
+  const antes = DB.lancamentos.length;
+  DB.lancamentos = DB.lancamentos.filter(l => l && l.id && l.id !== idToDelete);
+  if (DB.lancamentos.length !== antes - 1) {
+    console.warn('Delete inesperado: removeu', antes - DB.lancamentos.length, 'itens');
+  }
+  editingLancId = null;
   saveDB();
   closeModal('modal-lancar');
   render();
@@ -1670,9 +1729,24 @@ document.getElementById('c-salvar').addEventListener('click', () => {
   const nome = document.getElementById('c-nome').value.trim();
   if (!nome) { toast('Informe um nome'); return; }
   const tipo = document.getElementById('c-tipo').value.trim();
-  const saldoInicial = parseValor(document.getElementById('c-saldo').value);
+  const rawSaldo = document.getElementById('c-saldo').value.trim();
+  const saldoInicial = parseValor(rawSaldo);
+  // Detecta entrada inválida (texto não-numérico) que silenciosamente vira 0
+  if (rawSaldo && saldoInicial === 0 && !/^[0,.\s-]*$/.test(rawSaldo)) {
+    toast('Saldo inicial inválido'); return;
+  }
   if (editingContaId) {
     const c = DB.contas.find(x => x.id === editingContaId);
+    if ((c.saldoInicial || 0) !== saldoInicial) {
+      const usos = DB.lancamentos.filter(l =>
+        l.contaId === editingContaId ||
+        l.contaOrigemId === editingContaId ||
+        l.contaDestinoId === editingContaId
+      ).length;
+      if (usos > 0 && !confirm(`Mudar o saldo inicial recalcula TODO o histórico desta conta (${usos} lançamento${usos>1?'s':''} afetado${usos>1?'s':''}). Continuar?`)) {
+        return;
+      }
+    }
     Object.assign(c, { nome, tipo, saldoInicial, cor: selectedCorConta });
   } else {
     DB.contas.push({ id: uid(), nome, tipo, saldoInicial, cor: selectedCorConta, criadoEm: Date.now() });
@@ -1729,9 +1803,19 @@ document.getElementById('b-salvar').addEventListener('click', () => {
   const nome = document.getElementById('b-nome').value.trim();
   if (!nome) { toast('Informe um nome'); return; }
   const tipo = document.getElementById('b-tipo').value.trim();
-  const valorInicial = parseValor(document.getElementById('b-valor').value);
+  const rawValor = document.getElementById('b-valor').value.trim();
+  const valorInicial = parseValor(rawValor);
+  if (rawValor && valorInicial === 0 && !/^[0,.\s-]*$/.test(rawValor)) {
+    toast('Valor inicial inválido'); return;
+  }
   if (editingBemId) {
     const b = DB.bens.find(x => x.id === editingBemId);
+    if ((b.valorInicial || 0) !== valorInicial) {
+      const usos = DB.lancamentos.filter(l => l.bemId === editingBemId).length;
+      if (usos > 0 && !confirm(`Mudar o valor inicial recalcula TODO o histórico deste bem (${usos} lançamento${usos>1?'s':''} afetado${usos>1?'s':''}). Continuar?`)) {
+        return;
+      }
+    }
     Object.assign(b, { nome, tipo, valorInicial, cor: selectedCorBem });
   } else {
     DB.bens.push({ id: uid(), nome, tipo, valorInicial, cor: selectedCorBem, criadoEm: Date.now() });
@@ -1765,7 +1849,7 @@ function abrirBemDetalhe(id) {
   document.getElementById('bd-gastos-total').textContent = fmtBRL(gastosBem(id));
   const hist = DB.lancamentos
     .filter(l => l.bemId === id && (l.tipo === 'investimento' || l.tipo === 'despesa'))
-    .sort((a,b) => (b.data + b.id).localeCompare(a.data + a.id));
+    .sort((a,b) => (b.data || '').localeCompare(a.data || '') || (b.criadoEm || 0) - (a.criadoEm || 0));
   document.getElementById('bd-historico').innerHTML = hist.length
     ? '<div class="list">' + hist.map(lancItemHTML).join('') + '</div>'
     : '<div class="card" style="text-align:center;color:var(--muted);font-size:13px;">Sem histórico</div>';
@@ -2081,22 +2165,37 @@ document.getElementById('btn-importar').addEventListener('click', () => {
 document.getElementById('file-importar').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
-  if (!confirm('Substituir todos os dados atuais pelo arquivo?')) return;
+  if (!confirm('Substituir todos os dados atuais pelo arquivo importado? Faça um backup antes.')) {
+    e.target.value = ''; return;
+  }
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      const data = JSON.parse(ev.target.result);
-      if (!data.contas || !data.lancamentos || !data.categorias) throw new Error('Formato inválido');
-      DB = data;
+      const raw = JSON.parse(ev.target.result);
+      if (!raw || typeof raw !== 'object') throw new Error('Arquivo não é JSON válido');
+      const next = {
+        version: raw.version || 1,
+        contas: Array.isArray(raw.contas) ? raw.contas : [],
+        bens: Array.isArray(raw.bens) ? raw.bens : [],
+        categorias: (Array.isArray(raw.categorias) && raw.categorias.length) ? raw.categorias : [...DEFAULT_CATEGORIAS],
+        lancamentos: Array.isArray(raw.lancamentos) ? raw.lancamentos : [],
+        recorrencias: Array.isArray(raw.recorrencias) ? raw.recorrencias : []
+      };
+      // Sanidade: descarta lançamentos malformados
+      next.lancamentos = next.lancamentos.filter(l =>
+        l && l.id && l.tipo && typeof l.valor === 'number' && l.data
+      );
+      DB = next;
       saveDB();
       render();
       renderConfigCategorias();
-      toast('Importado');
+      toast(`Importado: ${next.lancamentos.length} lançamentos`);
     } catch (err) {
       toast('Arquivo inválido');
       console.error(err);
     }
   };
+  reader.onerror = () => toast('Erro ao ler arquivo');
   reader.readAsText(file);
   e.target.value = '';
 });
@@ -2289,6 +2388,38 @@ document.getElementById('btn-pin-toggle').addEventListener('click', () => {
 document.getElementById('btn-pin-alterar').addEventListener('click', () => {
   closeModal('modal-config');
   showLock('change-current');
+});
+
+/* ============================================================
+   ERROR BOUNDARIES GLOBAIS
+   ============================================================ */
+window.addEventListener('error', e => {
+  console.error('[FinErr]', e.error || e.message);
+  try { toast('Algo deu errado — recarregue se persistir'); } catch(_) {}
+});
+window.addEventListener('unhandledrejection', e => {
+  console.error('[FinPromise]', e.reason);
+  try { toast('Operação falhou — tente novamente'); } catch(_) {}
+});
+
+/* ============================================================
+   SYNC ENTRE ABAS (storage event)
+   ============================================================ */
+window.addEventListener('storage', e => {
+  if (e.key === DB_KEY && e.newValue) {
+    try {
+      const next = JSON.parse(e.newValue);
+      if (next && Array.isArray(next.lancamentos)) {
+        if (!Array.isArray(next.recorrencias)) next.recorrencias = [];
+        if (!Array.isArray(next.bens)) next.bens = [];
+        if (!Array.isArray(next.categorias) || !next.categorias.length) next.categorias = [...DEFAULT_CATEGORIAS];
+        if (!Array.isArray(next.contas)) next.contas = [];
+        DB = next;
+        render();
+        toast('Dados atualizados em outra aba');
+      }
+    } catch (err) { console.error('Sync falhou', err); }
+  }
 });
 
 /* ============================================================
