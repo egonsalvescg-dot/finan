@@ -12,18 +12,55 @@
 <title>Finanças</title>
 <style>
 :root {
+  /* Espaçamento (8px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Tipografia */
+  --font-xs: 11px;
+  --font-sm: 13px;
+  --font-base: 15px;
+  --font-md: 17px;
+  --font-lg: 22px;
+  --font-xl: 28px;
+  --font-display: 34px;
+
+  /* Border radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Touch target mínimo iOS HIG / Material */
+  --touch-min: 44px;
+
+  /* Cores base */
   --bg: #f5f5f7;
   --card: #ffffff;
   --card-2: #fafafa;
   --text: #0a0a0a;
   --muted: #6b7280;
   --border: #e5e7eb;
+
+  /* Cores semânticas */
   --accent: #059669;
+  --brand: #059669;
   --receita: #059669;
+  --success: #059669;
   --despesa: #dc2626;
+  --danger: #dc2626;
+  --warning: #d97706;
   --transfer: #6366f1;
+  --info: #6366f1;
   --invest: #d97706;
+
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -34,7 +71,11 @@
     --muted: #8e8e93;
     --border: #38383a;
     --accent: #10b981;
+    --brand: #10b981;
+    --receita: #10b981;
+    --success: #10b981;
     --shadow: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.5);
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -69,22 +110,25 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px;
 }
-.month-nav { display: flex; align-items: center; gap: 4px; }
+.month-nav { display: flex; align-items: center; gap: var(--space-1); }
 .month-nav button {
-  width: 36px; height: 36px; border-radius: 50%;
+  width: var(--touch-min); height: var(--touch-min);
+  border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   color: var(--muted);
+  font-size: 20px;
 }
 .month-nav button:active { background: var(--card-2); }
 .month-label {
   font-weight: 600;
-  font-size: 17px;
+  font-size: var(--font-md);
   min-width: 130px;
   text-align: center;
   text-transform: capitalize;
 }
 .icon-btn {
-  width: 40px; height: 40px; border-radius: 50%;
+  width: var(--touch-min); height: var(--touch-min);
+  border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   color: var(--muted);
 }
@@ -127,10 +171,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   font-weight: 500;
 }
 .patrimonio-valor {
-  font-size: 34px;
+  font-size: clamp(22px, 7.5vw, 34px);
   font-weight: 700;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   letter-spacing: -.02em;
+  line-height: 1.1;
+  word-break: break-word;
 }
 .patrimonio-detail {
   display: grid;
@@ -229,11 +275,14 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 }
 .chips::-webkit-scrollbar { display: none; }
 .chip {
-  padding: 7px 13px;
-  border-radius: 100px;
+  padding: var(--space-3) var(--space-4);
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
   background: var(--card);
   border: 1px solid var(--border);
-  font-size: 13px;
+  font-size: var(--font-sm);
   color: var(--text);
   white-space: nowrap;
   font-weight: 500;
@@ -321,10 +370,14 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 }
 .modal-title { font-size: 17px; font-weight: 600; }
 .modal-close {
-  padding: 6px 10px;
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: var(--space-2) var(--space-3);
   color: var(--accent);
   font-weight: 500;
-  font-size: 15px;
+  font-size: var(--font-base);
+  display: flex;
+  align-items: center;
 }
 .modal-section { margin-top: 16px; }
 .modal-section label {
@@ -356,10 +409,14 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   margin: 12px 0;
 }
 .tipo-tab {
-  padding: 10px 4px;
-  border-radius: 9px;
+  padding: var(--space-3) var(--space-1);
+  min-height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
   text-align: center;
-  font-size: 12px;
+  font-size: var(--font-xs);
   font-weight: 500;
   color: var(--muted);
 }
@@ -490,15 +547,28 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .btn-danger:active { background: rgba(220,38,38,.08); }
 
 .color-picker {
-  display: flex; gap: 8px; flex-wrap: wrap;
+  display: flex; gap: var(--space-1); flex-wrap: wrap;
 }
 .color-dot {
+  width: var(--touch-min); height: var(--touch-min);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.color-dot::before {
+  content: '';
+  display: block;
   width: 32px; height: 32px;
   border-radius: 50%;
+  background: var(--dot-color, currentColor);
   border: 3px solid transparent;
-  cursor: pointer;
+  box-sizing: border-box;
 }
-.color-dot.selected { border-color: var(--text); }
+.color-dot.selected::before { border-color: var(--text); }
 
 /* ====== Bem detail ====== */
 .bem-detail-stats {
@@ -583,6 +653,109 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   font-weight: 500;
 }
 .pad-key.del:active, .pad-key.action:active { background: var(--card-2); }
+
+/* ====== Modal de confirmação custom ====== */
+.confirm-backdrop {
+  align-items: center !important;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 300; /* acima dos outros modais (z 200) */
+}
+.confirm-modal {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: confirmIn .2s ease;
+}
+@keyframes confirmIn {
+  from { opacity: 0; transform: scale(.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+.confirm-icon {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--card-2);
+  margin: 0 auto var(--space-3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.confirm-icon.danger { background: rgba(220,38,38,.12); color: var(--danger); }
+.confirm-icon.warning { background: rgba(217,119,6,.12); color: var(--warning); }
+.confirm-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+.confirm-message {
+  color: var(--muted);
+  font-size: var(--font-sm);
+  margin-bottom: var(--space-5);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.confirm-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.confirm-btn {
+  flex: 1;
+  min-height: var(--touch-min);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--font-base);
+  padding: var(--space-3);
+}
+.confirm-btn.confirm-cancel { background: var(--card-2); color: var(--text); }
+.confirm-btn.confirm-ok { background: var(--accent); color: #fff; }
+.confirm-btn.confirm-ok.danger { background: var(--danger); }
+.confirm-btn:active { opacity: .8; }
+
+/* ====== Sticky save em modais ====== */
+.modal-sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg) 0%, var(--bg) 70%, transparent 100%);
+  margin: var(--space-4) calc(-1 * var(--space-4)) 0;
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  z-index: 2;
+}
+.modal-sticky-actions .btn-primary { margin-top: 0; }
+.modal-sticky-actions .btn-danger {
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+/* ====== Empty state com CTA ====== */
+.empty-cta {
+  margin-top: var(--space-4);
+  background: var(--accent);
+  color: #fff;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--font-base);
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.empty-cta:active { opacity: .85; }
+
+/* ====== Estado disabled de botões ====== */
+.btn-primary[disabled],
+.btn-primary.is-disabled {
+  opacity: .4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
 
 /* ====== Toast ====== */
 .toast {
@@ -743,6 +916,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   <div class="toast" id="toast"></div>
 </div>
 
+<!-- Modal de confirmação custom -->
+<div class="modal-backdrop confirm-backdrop" id="modal-confirm">
+  <div class="confirm-modal">
+    <div class="confirm-icon" id="confirm-icon">?</div>
+    <div class="confirm-title" id="confirm-title">Confirmar</div>
+    <div class="confirm-message" id="confirm-message"></div>
+    <div class="confirm-actions">
+      <button class="confirm-btn confirm-cancel" id="confirm-cancel">Cancelar</button>
+      <button class="confirm-btn confirm-ok" id="confirm-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Lançar -->
 <div class="modal-backdrop" id="modal-lancar">
   <div class="modal">
@@ -800,8 +986,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
       <select id="l-bem"></select>
     </div>
 
-    <button class="btn-primary" id="l-salvar">Salvar</button>
-    <button class="btn-danger" id="l-excluir" style="display:none;">Excluir lançamento</button>
+    <div class="modal-sticky-actions">
+      <button class="btn-primary" id="l-salvar">Salvar</button>
+      <button class="btn-danger" id="l-excluir" style="display:none;">Excluir lançamento</button>
+    </div>
   </div>
 </div>
 
@@ -836,8 +1024,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
       <label>Cor</label>
       <div class="color-picker" id="c-cores"></div>
     </div>
-    <button class="btn-primary" id="c-salvar">Salvar</button>
-    <button class="btn-danger" id="c-excluir" style="display:none;">Excluir conta</button>
+    <div class="modal-sticky-actions">
+      <button class="btn-primary" id="c-salvar">Salvar</button>
+      <button class="btn-danger" id="c-excluir" style="display:none;">Excluir conta</button>
+    </div>
   </div>
 </div>
 
@@ -871,8 +1061,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
       <label>Cor</label>
       <div class="color-picker" id="b-cores"></div>
     </div>
-    <button class="btn-primary" id="b-salvar">Salvar</button>
-    <button class="btn-danger" id="b-excluir" style="display:none;">Excluir bem</button>
+    <div class="modal-sticky-actions">
+      <button class="btn-primary" id="b-salvar">Salvar</button>
+      <button class="btn-danger" id="b-excluir" style="display:none;">Excluir bem</button>
+    </div>
   </div>
 </div>
 
@@ -984,8 +1176,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
         <div class="toggle-switch on" id="r-ativa"></div>
       </div>
     </div>
-    <button class="btn-primary" id="r-salvar">Salvar</button>
-    <button class="btn-danger" id="r-excluir" style="display:none;">Excluir despesa fixa</button>
+    <div class="modal-sticky-actions">
+      <button class="btn-primary" id="r-salvar">Salvar</button>
+      <button class="btn-danger" id="r-excluir" style="display:none;">Excluir despesa fixa</button>
+    </div>
   </div>
 </div>
 
@@ -1174,13 +1368,62 @@ function navMes(mes, delta) {
   return mesIso(d);
 }
 
-let _toastTimer = null;
-function toast(msg) {
+// Toast com fila — não sobrescreve mensagens em sequência
+const _toastQueue = [];
+let _toastShowing = false;
+function _showNextToast() {
+  if (_toastShowing) return;
+  const msg = _toastQueue.shift();
+  if (!msg) return;
+  _toastShowing = true;
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => { _toastShowing = false; _showNextToast(); }, 200);
+  }, 1800);
+}
+function toast(msg) {
+  _toastQueue.push(msg);
+  _showNextToast();
+}
+
+// Modal de confirmação custom — substitui confirm() nativo
+function confirmDialog(message, opts = {}) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('modal-confirm');
+    const ok = document.getElementById('confirm-ok');
+    const cancel = document.getElementById('confirm-cancel');
+    const icon = document.getElementById('confirm-icon');
+    const title = document.getElementById('confirm-title');
+    const msg = document.getElementById('confirm-message');
+
+    title.textContent = opts.title || 'Confirmar';
+    msg.textContent = message;
+    const variant = opts.danger ? 'danger' : (opts.warning ? 'warning' : '');
+    icon.className = 'confirm-icon' + (variant ? ' ' + variant : '');
+    icon.textContent = opts.danger ? '!' : (opts.warning ? '!' : '?');
+    ok.textContent = opts.okText || (opts.danger ? 'Excluir' : 'Confirmar');
+    ok.className = 'confirm-btn confirm-ok' + (opts.danger ? ' danger' : '');
+    cancel.textContent = opts.cancelText || 'Cancelar';
+
+    const cleanup = (result) => {
+      modal.classList.remove('open');
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBackdrop);
+      resolve(result);
+    };
+    const onOk = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    const onBackdrop = (e) => { if (e.target === modal) cleanup(false); };
+
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdrop);
+    modal.classList.add('open');
+  });
 }
 
 /* ============================================================
@@ -1324,6 +1567,7 @@ function render() {
   else if (currentView === 'lancamentos') renderLancamentos();
   else if (currentView === 'contas') renderContas();
   else if (currentView === 'bens') renderBens();
+  _toggleEmptyButtons();
 }
 
 function renderInicio() {
@@ -1449,7 +1693,11 @@ function renderLancamentos() {
     .sort((a,b) => (b.data || '').localeCompare(a.data || '') || (b.criadoEm || 0) - (a.criadoEm || 0));
   const el = document.getElementById('lancamentos-lista');
   if (!lista.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">◌</div><div class="empty-msg">Nenhum lançamento</div></div>';
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon">◌</div>
+      <div class="empty-msg">Nenhum lançamento neste mês</div>
+      <button class="empty-cta" onclick="abrirLancamentoNovo()">+ Novo lançamento</button>
+    </div>`;
     return;
   }
   el.innerHTML = '<div class="list">' + lista.map(lancItemHTML).join('') + '</div>';
@@ -1458,7 +1706,11 @@ function renderLancamentos() {
 function renderContas() {
   const el = document.getElementById('contas-lista');
   if (!DB.contas.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">▢</div><div class="empty-msg">Crie sua primeira conta para começar</div></div>';
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon">▢</div>
+      <div class="empty-msg">Nenhuma conta cadastrada</div>
+      <button class="empty-cta" onclick="abrirContaNova()">+ Criar primeira conta</button>
+    </div>`;
     return;
   }
   el.innerHTML = '<div class="list">' + DB.contas.map(c => `
@@ -1473,10 +1725,22 @@ function renderContas() {
   `).join('') + '</div>';
 }
 
+// Esconde botão "+ Nova" quando lista vazia (CTA fica no empty state)
+function _toggleEmptyButtons() {
+  const btnNC = document.getElementById('btn-nova-conta');
+  const btnNB = document.getElementById('btn-novo-bem');
+  if (btnNC) btnNC.style.display = DB.contas.length ? '' : 'none';
+  if (btnNB) btnNB.style.display = DB.bens.length ? '' : 'none';
+}
+
 function renderBens() {
   const el = document.getElementById('bens-lista');
   if (!DB.bens.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">◇</div><div class="empty-msg">Cadastre um bem (casa, terreno, poupança) para acompanhá-lo</div></div>';
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon">◇</div>
+      <div class="empty-msg">Cadastre um bem (casa, terreno, poupança) para acompanhar</div>
+      <button class="empty-cta" onclick="abrirBemNovo()">+ Adicionar bem</button>
+    </div>`;
     return;
   }
   el.innerHTML = '<div class="list">' + DB.bens.map(b => {
@@ -1530,7 +1794,7 @@ document.querySelectorAll('.modal-backdrop').forEach(b => {
 function renderColorPicker(elId, selected, onSelect) {
   const el = document.getElementById(elId);
   el.innerHTML = CORES.map(c =>
-    `<div class="color-dot ${c === selected ? 'selected':''}" style="background:${c};" data-cor="${c}"></div>`
+    `<div class="color-dot ${c === selected ? 'selected':''}" style="--dot-color:${c};" data-cor="${c}"></div>`
   ).join('');
   el.querySelectorAll('.color-dot').forEach(d => {
     d.addEventListener('click', () => {
@@ -1680,10 +1944,11 @@ document.getElementById('l-salvar').addEventListener('click', () => {
   toast(editingLancId ? 'Atualizado' : 'Lançado');
 });
 
-document.getElementById('l-excluir').addEventListener('click', () => {
+document.getElementById('l-excluir').addEventListener('click', async () => {
   if (!editingLancId) return;
   const idToDelete = editingLancId;
-  if (!confirm('Excluir este lançamento?')) return;
+  const ok = await confirmDialog('Esta ação não pode ser desfeita.', { title: 'Excluir lançamento?', danger: true });
+  if (!ok) return;
   const antes = DB.lancamentos.length;
   DB.lancamentos = DB.lancamentos.filter(l => l && l.id && l.id !== idToDelete);
   if (DB.lancamentos.length !== antes - 1) {
@@ -1725,13 +1990,12 @@ function abrirConta(id) {
   openModal('modal-conta');
 }
 
-document.getElementById('c-salvar').addEventListener('click', () => {
+document.getElementById('c-salvar').addEventListener('click', async () => {
   const nome = document.getElementById('c-nome').value.trim();
   if (!nome) { toast('Informe um nome'); return; }
   const tipo = document.getElementById('c-tipo').value.trim();
   const rawSaldo = document.getElementById('c-saldo').value.trim();
   const saldoInicial = parseValor(rawSaldo);
-  // Detecta entrada inválida (texto não-numérico) que silenciosamente vira 0
   if (rawSaldo && saldoInicial === 0 && !/^[0,.\s-]*$/.test(rawSaldo)) {
     toast('Saldo inicial inválido'); return;
   }
@@ -1743,8 +2007,12 @@ document.getElementById('c-salvar').addEventListener('click', () => {
         l.contaOrigemId === editingContaId ||
         l.contaDestinoId === editingContaId
       ).length;
-      if (usos > 0 && !confirm(`Mudar o saldo inicial recalcula TODO o histórico desta conta (${usos} lançamento${usos>1?'s':''} afetado${usos>1?'s':''}). Continuar?`)) {
-        return;
+      if (usos > 0) {
+        const ok = await confirmDialog(
+          `Recalcula TODO o histórico desta conta\n(${usos} lançamento${usos>1?'s':''} afetado${usos>1?'s':''}).`,
+          { title: 'Mudar saldo inicial?', warning: true, okText: 'Continuar' }
+        );
+        if (!ok) return;
       }
     }
     Object.assign(c, { nome, tipo, saldoInicial, cor: selectedCorConta });
@@ -1757,13 +2025,14 @@ document.getElementById('c-salvar').addEventListener('click', () => {
   toast('Salvo');
 });
 
-document.getElementById('c-excluir').addEventListener('click', () => {
+document.getElementById('c-excluir').addEventListener('click', async () => {
   if (!editingContaId) return;
   const usado = DB.lancamentos.some(l =>
     l.contaId === editingContaId || l.contaOrigemId === editingContaId || l.contaDestinoId === editingContaId
   );
   if (usado) { toast('Conta usada em lançamentos. Exclua-os antes.'); return; }
-  if (!confirm('Excluir esta conta?')) return;
+  const ok = await confirmDialog('Esta ação não pode ser desfeita.', { title: 'Excluir esta conta?', danger: true });
+  if (!ok) return;
   DB.contas = DB.contas.filter(c => c.id !== editingContaId);
   saveDB();
   closeModal('modal-conta');
@@ -1799,7 +2068,7 @@ function abrirBem(id) {
   openModal('modal-bem');
 }
 
-document.getElementById('b-salvar').addEventListener('click', () => {
+document.getElementById('b-salvar').addEventListener('click', async () => {
   const nome = document.getElementById('b-nome').value.trim();
   if (!nome) { toast('Informe um nome'); return; }
   const tipo = document.getElementById('b-tipo').value.trim();
@@ -1812,8 +2081,12 @@ document.getElementById('b-salvar').addEventListener('click', () => {
     const b = DB.bens.find(x => x.id === editingBemId);
     if ((b.valorInicial || 0) !== valorInicial) {
       const usos = DB.lancamentos.filter(l => l.bemId === editingBemId).length;
-      if (usos > 0 && !confirm(`Mudar o valor inicial recalcula TODO o histórico deste bem (${usos} lançamento${usos>1?'s':''} afetado${usos>1?'s':''}). Continuar?`)) {
-        return;
+      if (usos > 0) {
+        const ok = await confirmDialog(
+          `Recalcula TODO o histórico deste bem\n(${usos} lançamento${usos>1?'s':''} afetado${usos>1?'s':''}).`,
+          { title: 'Mudar valor inicial?', warning: true, okText: 'Continuar' }
+        );
+        if (!ok) return;
       }
     }
     Object.assign(b, { nome, tipo, valorInicial, cor: selectedCorBem });
@@ -1826,11 +2099,12 @@ document.getElementById('b-salvar').addEventListener('click', () => {
   toast('Salvo');
 });
 
-document.getElementById('b-excluir').addEventListener('click', () => {
+document.getElementById('b-excluir').addEventListener('click', async () => {
   if (!editingBemId) return;
   const usado = DB.lancamentos.some(l => l.bemId === editingBemId);
   if (usado) { toast('Bem vinculado a lançamentos. Exclua-os antes.'); return; }
-  if (!confirm('Excluir este bem?')) return;
+  const ok = await confirmDialog('Esta ação não pode ser desfeita.', { title: 'Excluir este bem?', danger: true });
+  if (!ok) return;
   DB.bens = DB.bens.filter(b => b.id !== editingBemId);
   saveDB();
   closeModal('modal-bem');
@@ -1873,7 +2147,11 @@ function renderListaFixas() {
   document.getElementById('fixas-mes-info').textContent = nomeMes(currentMes);
   const el = document.getElementById('fixas-lista');
   if (!DB.recorrencias.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">↻</div><div class="empty-msg">Nenhuma despesa fixa cadastrada</div></div>';
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon">↻</div>
+      <div class="empty-msg">Nenhuma despesa fixa cadastrada</div>
+      <button class="empty-cta" onclick="abrirRecorrenciaNova()">+ Nova despesa fixa</button>
+    </div>`;
     return;
   }
   const items = [...DB.recorrencias].sort((a,b) => {
@@ -1992,13 +2270,16 @@ document.getElementById('r-salvar').addEventListener('click', () => {
   toast('Salvo');
 });
 
-document.getElementById('r-excluir').addEventListener('click', () => {
+document.getElementById('r-excluir').addEventListener('click', async () => {
   if (!editingRecorrenciaId) return;
   const temLanc = DB.lancamentos.some(l => l.recorrenciaId === editingRecorrenciaId);
-  const msg = temLanc
-    ? 'Existem lançamentos vinculados a esta despesa fixa. Excluir só a recorrência (lançamentos ficam)?'
-    : 'Excluir esta despesa fixa?';
-  if (!confirm(msg)) return;
+  const ok = await confirmDialog(
+    temLanc
+      ? 'Os lançamentos antigos serão mantidos mas perderão o vínculo.'
+      : 'Esta ação não pode ser desfeita.',
+    { title: 'Excluir esta despesa fixa?', danger: true }
+  );
+  if (!ok) return;
   DB.recorrencias = DB.recorrencias.filter(r => r.id !== editingRecorrenciaId);
   // Mantém lançamentos mas desvincula
   if (temLanc) {
@@ -2122,12 +2403,22 @@ function abrirCategoria(id) {
   openModal('modal-categoria');
 }
 
-document.getElementById('cat-salvar').addEventListener('click', () => {
+document.getElementById('cat-salvar').addEventListener('click', async () => {
   const nome = document.getElementById('cat-nome').value.trim();
   if (!nome) { toast('Informe um nome'); return; }
   const tipo = document.getElementById('cat-tipo').value;
   if (editingCategoriaId) {
     const c = DB.categorias.find(x => x.id === editingCategoriaId);
+    if (c.tipo !== tipo) {
+      const usos = DB.lancamentos.filter(l => l.categoriaId === editingCategoriaId).length;
+      if (usos > 0) {
+        const ok = await confirmDialog(
+          `${usos} lançamento${usos>1?'s':''} ficará órfão (não aparecerá nas listas filtradas por tipo).`,
+          { title: 'Mudar tipo da categoria?', warning: true, okText: 'Continuar' }
+        );
+        if (!ok) return;
+      }
+    }
     Object.assign(c, { nome, tipo, cor: selectedCorCat });
   } else {
     DB.categorias.push({ id: uid(), nome, tipo, cor: selectedCorCat });
@@ -2138,11 +2429,12 @@ document.getElementById('cat-salvar').addEventListener('click', () => {
   render();
 });
 
-document.getElementById('cat-excluir').addEventListener('click', () => {
+document.getElementById('cat-excluir').addEventListener('click', async () => {
   if (!editingCategoriaId) return;
   const usado = DB.lancamentos.some(l => l.categoriaId === editingCategoriaId);
   if (usado) { toast('Categoria em uso. Edite os lançamentos primeiro.'); return; }
-  if (!confirm('Excluir esta categoria?')) return;
+  const ok = await confirmDialog('Esta ação não pode ser desfeita.', { title: 'Excluir esta categoria?', danger: true });
+  if (!ok) return;
   DB.categorias = DB.categorias.filter(c => c.id !== editingCategoriaId);
   saveDB();
   closeModal('modal-categoria');
@@ -2174,12 +2466,14 @@ document.getElementById('btn-importar').addEventListener('click', () => {
   document.getElementById('file-importar').click();
 });
 
-document.getElementById('file-importar').addEventListener('change', e => {
+document.getElementById('file-importar').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
-  if (!confirm('Substituir todos os dados atuais pelo arquivo importado? Faça um backup antes.')) {
-    e.target.value = ''; return;
-  }
+  const ok = await confirmDialog(
+    'Substitui TODOS os dados atuais. Faça um backup antes (Exportar JSON).',
+    { title: 'Importar este arquivo?', warning: true, okText: 'Importar' }
+  );
+  if (!ok) { e.target.value = ''; return; }
   const reader = new FileReader();
   reader.onload = ev => {
     try {
@@ -2212,10 +2506,11 @@ document.getElementById('file-importar').addEventListener('change', e => {
   e.target.value = '';
 });
 
-document.getElementById('btn-reset').addEventListener('click', () => {
-  if (!confirm('Apagar TODOS os dados? Não tem como desfazer.')) return;
-  if (!confirm('Tem certeza mesmo? Faça um backup antes.')) return;
-  // Remove TODAS as chaves do app (DB, PIN, salt, bloqueios)
+document.getElementById('btn-reset').addEventListener('click', async () => {
+  const ok1 = await confirmDialog('Apaga contas, bens, categorias, lançamentos, fixas e PIN.', { title: 'Apagar TODOS os dados?', danger: true, okText: 'Apagar' });
+  if (!ok1) return;
+  const ok2 = await confirmDialog('Faça um backup (Exportar JSON) antes. Tem certeza mesmo?', { title: 'Última confirmação', danger: true, okText: 'Sim, apagar tudo' });
+  if (!ok2) return;
   const chaves = Object.keys(localStorage).filter(k => k.startsWith('financas:'));
   for (const k of chaves) localStorage.removeItem(k);
   DB = loadDB();
@@ -2248,11 +2543,42 @@ document.querySelectorAll('#lanc-filters .chip').forEach(c => {
   });
 });
 
-/* Permite digitar valor monetário */
+/* Permite digitar valor monetário + estado disabled do Salvar */
+function _atualizarSalvarLancamento() {
+  const v = parseValor(document.getElementById('l-valor').value);
+  document.getElementById('l-salvar').classList.toggle('is-disabled', v <= 0);
+}
 document.getElementById('l-valor').addEventListener('input', e => {
   let v = e.target.value.replace(/[^\d,]/g, '');
   e.target.value = v;
+  _atualizarSalvarLancamento();
 });
+
+/* Estado disabled em outros saves */
+function _bindDisable(inputId, btnId, validator) {
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  const update = () => btn.classList.toggle('is-disabled', !validator(input.value));
+  input.addEventListener('input', update);
+  // Roda na abertura do modal — observa visibilidade do parent .modal-backdrop
+  return update;
+}
+const _updateContaSalvar = _bindDisable('c-nome', 'c-salvar', v => v.trim().length > 0);
+const _updateBemSalvar = _bindDisable('b-nome', 'b-salvar', v => v.trim().length > 0);
+const _updateRecSalvar = _bindDisable('r-nome', 'r-salvar', v => v.trim().length > 0);
+const _updateCatSalvar = _bindDisable('cat-nome', 'cat-salvar', v => v.trim().length > 0);
+// Recheca ao abrir modais
+const _origOpenModal = openModal;
+openModal = function(id) {
+  _origOpenModal(id);
+  setTimeout(() => {
+    if (id === 'modal-lancar') _atualizarSalvarLancamento();
+    if (id === 'modal-conta') _updateContaSalvar();
+    if (id === 'modal-bem') _updateBemSalvar();
+    if (id === 'modal-recorrencia') _updateRecSalvar();
+    if (id === 'modal-categoria') _updateCatSalvar();
+  }, 50);
+};
 
 /* ============================================================
    PIN / LOCK SCREEN
