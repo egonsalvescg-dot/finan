@@ -2,147 +2,334 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0a">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
 <title>Finanças</title>
 <style>
+/* =====================================================================
+   DESIGN TOKENS
+   ===================================================================== */
 :root {
-  --bg: #f5f5f7;
+  /* Surfaces — iOS light */
+  --bg: #f2f2f7;
+  --bg-elev: #ffffff;
   --card: #ffffff;
-  --card-2: #fafafa;
-  --text: #0a0a0a;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --accent: #059669;
-  --receita: #059669;
-  --despesa: #dc2626;
-  --transfer: #6366f1;
-  --invest: #d97706;
-  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+  --card-2: #f2f2f7;
+  --card-3: #e5e5ea;
+  --separator: rgba(60,60,67,.12);
+  --separator-strong: rgba(60,60,67,.29);
+
+  /* Text */
+  --text: #000000;
+  --text-2: #3c3c43;
+  --muted: #8e8e93;
+  --muted-2: rgba(60,60,67,.6);
+  --placeholder: rgba(60,60,67,.3);
+
+  /* Tints */
+  --tint: #34c759;
+  --tint-press: #248a3d;
+  --receita: #34c759;
+  --despesa: #ff3b30;
+  --transfer: #5856d6;
+  --invest: #ff9500;
+  --warning: #ff9500;
+
+  /* Effects */
+  --shadow-1: 0 1px 2px rgba(0,0,0,.04), 0 1px 1px rgba(0,0,0,.02);
+  --shadow-2: 0 4px 16px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-3: 0 8px 32px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+  --shadow-fab: 0 6px 20px rgba(52,199,89,.4), 0 2px 6px rgba(52,199,89,.25);
+
+  /* Geometry */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(.2,.8,.2,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
 }
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #000000;
+    --bg-elev: #1c1c1e;
     --card: #1c1c1e;
     --card-2: #2c2c2e;
-    --text: #f5f5f7;
+    --card-3: #3a3a3c;
+    --separator: rgba(84,84,88,.5);
+    --separator-strong: rgba(84,84,88,.85);
+
+    --text: #ffffff;
+    --text-2: #ebebf5;
     --muted: #8e8e93;
-    --border: #38383a;
-    --accent: #10b981;
-    --shadow: 0 1px 2px rgba(0,0,0,.4);
+    --muted-2: rgba(235,235,245,.6);
+    --placeholder: rgba(235,235,245,.3);
+
+    --tint: #30d158;
+    --tint-press: #248a3d;
+    --receita: #30d158;
+    --despesa: #ff453a;
+    --transfer: #5e5ce6;
+    --invest: #ff9f0a;
+    --warning: #ff9f0a;
+
+    --shadow-1: 0 1px 2px rgba(0,0,0,.5);
+    --shadow-2: 0 4px 16px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.4);
+    --shadow-3: 0 8px 32px rgba(0,0,0,.65), 0 2px 6px rgba(0,0,0,.5);
+    --shadow-fab: 0 6px 20px rgba(48,209,88,.45), 0 2px 6px rgba(48,209,88,.3);
   }
 }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; padding: 0; height: 100%; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+
+/* =====================================================================
+   RESET
+   ===================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html, body {
+  margin: 0; padding: 0;
+  height: 100%;
   background: var(--bg);
+  overscroll-behavior-y: none;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
   font-size: 15px;
   line-height: 1.4;
+  letter-spacing: -.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   padding-bottom: calc(72px + env(safe-area-inset-bottom));
   padding-top: env(safe-area-inset-top);
 }
-button, input, select, textarea { font: inherit; color: inherit; }
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
 button { cursor: pointer; border: none; background: none; padding: 0; }
 input, select, textarea {
   background: var(--card-2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  padding: 13px 14px;
   width: 100%;
   font-size: 16px; /* iOS anti-zoom */
   outline: none;
+  transition: border-color .15s, background .15s;
+  -webkit-appearance: none;
+  appearance: none;
 }
-input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+input::placeholder, textarea::placeholder { color: var(--placeholder); }
+input:focus, select:focus, textarea:focus {
+  background: var(--bg-elev);
+  border-color: var(--tint);
+}
+select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='%238e8e93' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M4 6l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+}
 
-/* ====== Header ====== */
+/* =====================================================================
+   ICONS (SVG sprite)
+   ===================================================================== */
+.ic {
+  width: 22px; height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.ic-sm { width: 18px; height: 18px; }
+.ic-lg { width: 26px; height: 26px; }
+
+/* =====================================================================
+   HEADER
+   ===================================================================== */
 .header {
-  position: sticky; top: 0; z-index: 10;
+  position: sticky; top: env(safe-area-inset-top); z-index: 10;
   background: var(--bg);
-  padding: 14px 16px 8px;
+  padding: 12px 16px 8px;
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px;
+  transition: box-shadow .2s, background .2s;
 }
-.month-nav { display: flex; align-items: center; gap: 4px; }
+.header.elevated {
+  box-shadow: 0 1px 0 var(--separator);
+}
+.month-nav {
+  display: flex; align-items: center; gap: 2px;
+  flex: 1;
+}
 .month-nav button {
   width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  color: var(--muted);
+  color: var(--text-2);
+  transition: background .15s;
 }
 .month-nav button:active { background: var(--card-2); }
 .month-label {
   font-weight: 600;
   font-size: 17px;
-  min-width: 130px;
+  flex: 1;
   text-align: center;
-  text-transform: capitalize;
+  letter-spacing: -.02em;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer;
+  user-select: none;
 }
+.month-label .ml-text { display: inline-block; }
+.month-label .ml-today {
+  display: none;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tint);
+  background: rgba(52,199,89,.12);
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.month-label.is-other .ml-today { display: inline-block; }
 .icon-btn {
-  width: 40px; height: 40px; border-radius: 50%;
+  width: 38px; height: 38px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  color: var(--muted);
+  color: var(--text-2);
+  transition: background .15s, color .15s;
 }
 .icon-btn:active { background: var(--card-2); }
+.icon-btn.tint { color: var(--tint); }
 
-/* ====== Views ====== */
-.view { padding: 0 16px 16px; display: none; }
+/* =====================================================================
+   VIEWS
+   ===================================================================== */
+.view {
+  padding: 0 16px 24px;
+  display: none;
+  animation: fadeIn .25s var(--ease-out);
+}
 .view.active { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .section-title {
   font-size: 13px;
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: .04em;
-  margin: 20px 4px 8px;
+  margin: 22px 4px 8px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-title .st-action {
+  text-transform: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tint);
+  letter-spacing: 0;
 }
 
-/* ====== Cards ====== */
+/* =====================================================================
+   CARDS
+   ===================================================================== */
 .card {
   background: var(--card);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   padding: 16px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-1);
 }
 .card + .card { margin-top: 10px; }
-.card.row { display: flex; align-items: center; gap: 12px; }
-.card.row.tappable:active { background: var(--card-2); }
+.card.muted {
+  background: transparent;
+  box-shadow: none;
+  border: 1px dashed var(--separator-strong);
+}
 
-/* ====== Dashboard ====== */
+/* =====================================================================
+   DASHBOARD — Patrimônio
+   ===================================================================== */
 .patrimonio-card {
-  background: var(--card);
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--card) 0%, var(--card) 100%);
+  border-radius: var(--r-lg);
   padding: 20px;
   margin-top: 4px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-2);
+  position: relative;
+  overflow: hidden;
+}
+.patrimonio-card::before {
+  content: '';
+  position: absolute;
+  top: -50%; right: -30%;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(52,199,89,.10), transparent 70%);
+  pointer-events: none;
 }
 .patrimonio-label {
   font-size: 13px;
   color: var(--muted);
   font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.patrimonio-label .pin-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--card-2);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
 }
 .patrimonio-valor {
   font-size: 34px;
   font-weight: 700;
   margin-top: 4px;
-  letter-spacing: -.02em;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
 }
 .patrimonio-detail {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 14px;
+  margin-top: 16px;
   padding-top: 14px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--separator);
 }
-.pd-item .pd-label { font-size: 12px; color: var(--muted); }
-.pd-item .pd-valor { font-size: 16px; font-weight: 600; margin-top: 2px; }
+.pd-item { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+.pd-item .pd-label {
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.pd-item .pd-valor {
+  font-size: 17px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.015em;
+}
 
+/* Mês — 4 cards */
 .mes-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -151,111 +338,268 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 }
 .mes-card {
   background: var(--card);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   padding: 14px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-1);
+  display: flex; flex-direction: column; gap: 4px;
+  cursor: pointer;
+  transition: transform .15s var(--ease-spring);
+}
+.mes-card:active { transform: scale(.97); }
+.mes-card .mc-row {
+  display: flex; align-items: center; gap: 8px;
 }
 .mes-card .mc-icon {
   width: 32px; height: 32px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
 }
-.mes-card .mc-label { font-size: 12px; color: var(--muted); margin-top: 8px; }
-.mes-card .mc-valor { font-size: 18px; font-weight: 600; margin-top: 2px; letter-spacing: -.01em; }
-.mes-card.receita .mc-icon { background: rgba(5,150,105,.12); color: var(--receita); }
-.mes-card.despesa .mc-icon { background: rgba(220,38,38,.12); color: var(--despesa); }
-.mes-card.saldo .mc-icon { background: rgba(99,102,241,.12); color: var(--transfer); }
-.mes-card.invest .mc-icon { background: rgba(217,119,6,.12); color: var(--invest); }
+.mes-card .mc-icon .ic { width: 16px; height: 16px; stroke-width: 2.2; }
+.mes-card .mc-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.mes-card .mc-valor {
+  font-size: 18px; font-weight: 600;
+  letter-spacing: -.015em;
+  font-variant-numeric: tabular-nums;
+}
+.mes-card.receita .mc-icon { background: rgba(52,199,89,.14); color: var(--receita); }
+.mes-card.despesa .mc-icon { background: rgba(255,59,48,.14); color: var(--despesa); }
+.mes-card.saldo .mc-icon { background: rgba(88,86,214,.14); color: var(--transfer); }
+.mes-card.invest .mc-icon { background: rgba(255,149,0,.14); color: var(--invest); }
+.mes-card.saldo .mc-valor.neg { color: var(--despesa); }
+.mes-card.saldo .mc-valor.pos { color: var(--receita); }
 
-/* ====== Listas ====== */
-.list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: 14px; overflow: hidden; }
+/* Mini chart 6 meses */
+.trend-card {
+  background: var(--card);
+  border-radius: var(--r-md);
+  padding: 14px 14px 10px;
+  box-shadow: var(--shadow-1);
+  margin-top: 10px;
+}
+.trend-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.trend-head .th-title { font-size: 13px; font-weight: 500; color: var(--muted); }
+.trend-head .th-legend { display: flex; gap: 10px; font-size: 11px; color: var(--muted); }
+.trend-head .th-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.trend-head .th-legend i {
+  width: 8px; height: 8px; border-radius: 2px; display: inline-block;
+}
+.trend-bars {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  align-items: end;
+  height: 90px;
+}
+.trend-col {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  height: 100%;
+  cursor: pointer;
+}
+.trend-col .tc-pair {
+  flex: 1;
+  display: flex; align-items: flex-end; gap: 2px;
+  width: 100%; max-width: 32px;
+}
+.trend-col .tc-bar {
+  flex: 1;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: opacity .2s;
+}
+.trend-col .tc-bar.r { background: var(--receita); }
+.trend-col .tc-bar.d { background: var(--despesa); }
+.trend-col .tc-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+.trend-col.current .tc-label { color: var(--text); font-weight: 600; }
+.trend-col:not(.current) .tc-bar { opacity: .55; }
+
+/* =====================================================================
+   LISTS
+   ===================================================================== */
+.list {
+  display: flex; flex-direction: column;
+  background: var(--card);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
 .list-item {
   background: var(--card);
   padding: 12px 14px;
   display: flex; align-items: center; gap: 12px;
+  position: relative;
+  transition: background .12s;
+}
+.list-item + .list-item {
+  border-top: .5px solid var(--separator);
 }
 .list-item:active { background: var(--card-2); }
+.list-item.tappable { cursor: pointer; }
+
 .li-icon {
   width: 38px; height: 38px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #fff;
+  letter-spacing: 0;
 }
+.li-icon.sq {
+  border-radius: 10px;
+}
+.li-icon .ic { width: 17px; height: 17px; stroke-width: 2.2; }
 .li-body { flex: 1; min-width: 0; }
-.li-title { font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.li-sub { color: var(--muted); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-title {
+  font-weight: 500; font-size: 15px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -.01em;
+}
+.li-sub {
+  color: var(--muted); font-size: 12.5px;
+  margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .li-right { text-align: right; flex-shrink: 0; }
-.li-valor { font-weight: 600; font-size: 15px; }
+.li-valor {
+  font-weight: 600; font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.015em;
+}
 .li-valor.pos { color: var(--receita); }
 .li-valor.neg { color: var(--despesa); }
 .li-valor.neutral { color: var(--text); }
 .li-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.li-chevron {
+  color: var(--muted);
+  margin-left: 4px;
+  display: flex;
+  flex-shrink: 0;
+}
+.li-chevron .ic { width: 16px; height: 16px; stroke-width: 2.4; }
 
-/* ====== Empty ====== */
+/* Empty state */
 .empty {
   text-align: center;
-  padding: 40px 16px;
+  padding: 56px 16px;
   color: var(--muted);
 }
-.empty-icon { font-size: 36px; margin-bottom: 8px; opacity: .5; }
-.empty-msg { font-size: 14px; }
+.empty-icon {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--card);
+  margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted-2);
+  box-shadow: var(--shadow-1);
+}
+.empty-icon .ic { width: 28px; height: 28px; }
+.empty-title { font-size: 15px; font-weight: 500; color: var(--text-2); }
+.empty-msg { font-size: 13px; margin-top: 4px; color: var(--muted); max-width: 280px; margin-left: auto; margin-right: auto; }
 
-/* ====== Botão "novo" inline ====== */
+/* Add row inline */
 .add-row {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   background: var(--card);
-  border-radius: 12px;
-  padding: 12px;
-  color: var(--accent);
+  border-radius: var(--r-md);
+  padding: 14px;
+  color: var(--tint);
   font-weight: 500;
-  font-size: 14px;
-  box-shadow: var(--shadow);
+  font-size: 14.5px;
+  box-shadow: var(--shadow-1);
+  width: 100%;
+  transition: background .15s;
 }
-.add-row:active { opacity: .7; }
+.add-row:active { background: var(--card-2); }
+.add-row .ic { width: 18px; height: 18px; }
 
-/* ====== Chips/filtros ====== */
+/* =====================================================================
+   SEARCH BAR
+   ===================================================================== */
+.search-bar {
+  position: relative;
+  margin: 4px 0 10px;
+}
+.search-bar input {
+  background: var(--card-2);
+  padding: 10px 14px 10px 38px;
+  border-radius: var(--r-sm);
+  font-size: 15px;
+}
+.search-bar .sb-icon {
+  position: absolute;
+  left: 11px; top: 50%; transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.search-bar .sb-clear {
+  position: absolute;
+  right: 8px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--card-3);
+  color: var(--muted);
+  display: none;
+  align-items: center; justify-content: center;
+}
+.search-bar.has-text .sb-clear { display: flex; }
+
+/* =====================================================================
+   CHIPS
+   ===================================================================== */
 .chips {
   display: flex;
-  gap: 8px;
+  gap: 7px;
   overflow-x: auto;
   margin: 0 -16px;
-  padding: 0 16px;
+  padding: 4px 16px 4px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 .chips::-webkit-scrollbar { display: none; }
 .chip {
-  padding: 7px 13px;
-  border-radius: 100px;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
   background: var(--card);
-  border: 1px solid var(--border);
   font-size: 13px;
   color: var(--text);
   white-space: nowrap;
   font-weight: 500;
   flex-shrink: 0;
+  box-shadow: var(--shadow-1);
+  transition: background .15s, color .15s, transform .15s;
 }
+.chip:active { transform: scale(.96); }
 .chip.active {
   background: var(--text);
   color: var(--bg);
-  border-color: var(--text);
 }
+.chip.t-receita.active { background: var(--receita); color: #fff; }
+.chip.t-despesa.active { background: var(--despesa); color: #fff; }
+.chip.t-transferencia.active { background: var(--transfer); color: #fff; }
+.chip.t-investimento.active { background: var(--invest); color: #fff; }
 
-/* ====== Bottom Nav + FAB ====== */
+/* =====================================================================
+   BOTTOM NAV + FAB
+   ===================================================================== */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--card);
-  border-top: 1px solid var(--border);
+  background: rgba(255,255,255,.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: .5px solid var(--separator);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  height: 64px;
+  height: 60px;
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 100;
+}
+@media (prefers-color-scheme: dark) {
+  .bottom-nav { background: rgba(28,28,30,.85); }
 }
 .nav-item {
   flex: 1;
@@ -265,28 +609,34 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   font-size: 10px;
   font-weight: 500;
   height: 100%;
+  transition: color .15s;
 }
-.nav-item.active { color: var(--accent); }
-.nav-item .ni-icon { font-size: 22px; }
-.nav-item.fab-slot { visibility: hidden; }
+.nav-item.active { color: var(--tint); }
+.nav-item .ni-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+.nav-item .ni-icon .ic { width: 24px; height: 24px; stroke-width: 1.7; }
+.nav-item.active .ni-icon .ic { stroke-width: 2; }
+.nav-item.fab-slot { visibility: hidden; pointer-events: none; }
 
 .fab {
   position: fixed;
-  bottom: calc(32px + env(safe-area-inset-bottom));
+  bottom: calc(30px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   width: 56px; height: 56px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--tint);
   color: #fff;
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px;
-  box-shadow: 0 4px 16px rgba(5,150,105,.4);
+  box-shadow: var(--shadow-fab);
   z-index: 101;
+  transition: transform .12s var(--ease-spring);
 }
-.fab:active { transform: translateX(-50%) scale(.94); }
+.fab .ic { width: 26px; height: 26px; stroke-width: 2.4; }
+.fab:active { transform: translateX(-50%) scale(.92); }
 
-/* ====== Modal ====== */
+/* =====================================================================
+   MODALS
+   ===================================================================== */
 .modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,.4);
@@ -294,40 +644,57 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   display: none;
   align-items: flex-end;
   justify-content: center;
+  opacity: 0;
+  transition: opacity .22s;
 }
-.modal-backdrop.open { display: flex; }
+.modal-backdrop.open { display: flex; opacity: 1; }
 .modal {
   background: var(--bg);
   width: 100%;
   max-width: 480px;
   max-height: 92vh;
-  border-radius: 20px 20px 0 0;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 4px 16px calc(24px + env(safe-area-inset-bottom));
-  animation: slideUp .25s ease;
+  padding: 0 16px calc(24px + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform .28s var(--ease-out);
+  display: flex;
+  flex-direction: column;
 }
-@media (min-width: 480px) {
+.modal-backdrop.open .modal { transform: translateY(0); }
+@media (min-width: 520px) {
   .modal-backdrop { align-items: center; }
-  .modal { border-radius: 20px; max-height: 86vh; }
+  .modal { border-radius: var(--r-xl); max-height: 88vh; }
 }
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle {
+  width: 36px; height: 4px;
+  border-radius: 2px;
+  background: var(--card-3);
+  margin: 8px auto 4px;
+  flex-shrink: 0;
+}
 .modal-header {
   position: sticky; top: 0;
   background: var(--bg);
-  padding: 12px 0 8px;
+  padding: 8px 0 12px;
   display: flex; align-items: center; justify-content: space-between;
   z-index: 1;
 }
-.modal-title { font-size: 17px; font-weight: 600; }
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -.015em;
+}
 .modal-close {
   padding: 6px 10px;
-  color: var(--accent);
+  color: var(--tint);
   font-weight: 500;
   font-size: 15px;
 }
-.modal-section { margin-top: 16px; }
-.modal-section label {
+.modal-close.danger { color: var(--despesa); }
+.modal-section { margin-top: 14px; }
+.modal-section label.fld-label {
   display: block;
   font-size: 12px;
   color: var(--muted);
@@ -336,186 +703,253 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   text-transform: uppercase;
   letter-spacing: .04em;
 }
+.modal-section .helper {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 6px 4px 0;
+}
+
+/* Amount input */
 .amount-input {
   background: var(--card);
   border: none;
   font-size: 36px;
   font-weight: 700;
   text-align: center;
-  padding: 24px 16px;
-  border-radius: 14px;
-  letter-spacing: -.02em;
+  padding: 22px 16px;
+  border-radius: var(--r-md);
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow-1);
 }
+.amount-input:focus { background: var(--bg-elev); }
+
+/* Tabs */
 .tipo-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  gap: 3px;
   background: var(--card-2);
-  border-radius: 12px;
-  padding: 4px;
+  border-radius: var(--r-sm);
+  padding: 3px;
   margin: 12px 0;
 }
 .tipo-tab {
-  padding: 10px 4px;
-  border-radius: 9px;
+  padding: 9px 4px;
+  border-radius: 8px;
   text-align: center;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--muted);
+  transition: all .15s;
+  cursor: pointer;
+  user-select: none;
 }
 .tipo-tab.active {
   background: var(--card);
   color: var(--text);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-1);
 }
 .tipo-tab[data-tipo="receita"].active { color: var(--receita); }
 .tipo-tab[data-tipo="despesa"].active { color: var(--despesa); }
 .tipo-tab[data-tipo="transferencia"].active { color: var(--transfer); }
 .tipo-tab[data-tipo="investimento"].active { color: var(--invest); }
 
-/* ====== Despesas fixas ====== */
+/* =====================================================================
+   FIXAS
+   ===================================================================== */
 .fixas-card {
   background: var(--card);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   padding: 16px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-1);
   cursor: pointer;
+  transition: transform .15s;
 }
-.fixas-card:active { background: var(--card-2); }
+.fixas-card:active { transform: scale(.99); }
 .fixas-head {
-  display: flex; justify-content: space-between; align-items: baseline;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px;
 }
-.fixas-total { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
-.fixas-status { font-size: 12px; color: var(--muted); font-weight: 500; }
+.fixas-total {
+  font-size: 22px; font-weight: 700;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.fixas-total .ft-sep { color: var(--muted); font-weight: 500; font-size: 14px; }
+.fixas-status { font-size: 12.5px; color: var(--muted); font-weight: 500; margin-top: 2px; }
 .fixas-bar {
   margin-top: 12px;
   height: 6px;
   background: var(--card-2);
-  border-radius: 100px;
+  border-radius: var(--r-pill);
   overflow: hidden;
 }
 .fixas-bar-fill {
   height: 100%;
-  background: var(--accent);
-  border-radius: 100px;
-  transition: width .25s ease;
+  background: var(--tint);
+  border-radius: var(--r-pill);
+  transition: width .35s var(--ease-out);
 }
 .fixas-bar-fill.full { background: var(--receita); }
-.badge-fixa {
+.fixas-bar-fill.late { background: var(--warning); }
+
+.badge {
   display: inline-block;
   background: var(--card-2);
   color: var(--muted);
   font-size: 10px;
   font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 100px;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
   margin-left: 6px;
   vertical-align: middle;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
+.badge.fixa { background: rgba(88,86,214,.14); color: var(--transfer); }
+.badge.late { background: rgba(255,149,0,.16); color: var(--warning); }
+.badge.future { background: rgba(142,142,147,.14); color: var(--muted); }
+
 .recorr-item {
   background: var(--card);
   padding: 12px 14px;
   display: flex; align-items: center; gap: 12px;
 }
+.recorr-item + .recorr-item { border-top: .5px solid var(--separator); }
 .recorr-item:active { background: var(--card-2); }
 .recorr-status {
   flex-shrink: 0;
-  width: 24px; height: 24px;
+  width: 32px; height: 32px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
-.recorr-status.paga { background: var(--receita); color: #fff; }
-.recorr-status.pendente { background: var(--card-2); color: var(--muted); border: 1.5px dashed var(--border); }
+.recorr-status.paga { background: var(--tint); color: #fff; }
+.recorr-status.paga .ic { width: 16px; height: 16px; stroke-width: 2.8; }
+.recorr-status.pendente { background: var(--card-2); color: var(--muted); border: 1.5px dashed var(--separator-strong); }
+.recorr-status.atrasada { background: rgba(255,149,0,.16); color: var(--warning); border: 1.5px solid var(--warning); }
 .recorr-status.inativa { background: var(--card-2); color: var(--muted); opacity: .5; }
+
+/* Toggle */
 .toggle {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 0;
 }
+.toggle-label { display: flex; flex-direction: column; gap: 2px; }
+.toggle-label .tl-sub { font-size: 12px; color: var(--muted); }
 .toggle-switch {
-  width: 44px; height: 26px;
-  background: var(--card-2);
-  border-radius: 100px;
+  width: 51px; height: 31px;
+  background: var(--card-3);
+  border-radius: var(--r-pill);
   position: relative;
   cursor: pointer;
-  border: 1px solid var(--border);
-  transition: background .2s;
+  transition: background .22s;
+  flex-shrink: 0;
 }
 .toggle-switch::after {
   content: ''; position: absolute;
   top: 2px; left: 2px;
-  width: 20px; height: 20px;
+  width: 27px; height: 27px;
   background: #fff;
   border-radius: 50%;
-  transition: transform .2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .25s var(--ease-spring);
+  box-shadow: 0 2px 4px rgba(0,0,0,.2);
 }
-.toggle-switch.on { background: var(--accent); border-color: var(--accent); }
-.toggle-switch.on::after { transform: translateX(18px); }
+.toggle-switch.on { background: var(--tint); }
+.toggle-switch.on::after { transform: translateX(20px); }
 
+/* Buttons */
 .btn-primary {
   width: 100%;
-  background: var(--accent);
+  background: var(--tint);
   color: #fff;
   padding: 14px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   font-weight: 600;
   font-size: 16px;
   margin-top: 20px;
+  transition: opacity .15s, transform .12s;
+  letter-spacing: -.01em;
 }
-.btn-primary:active { opacity: .8; }
+.btn-primary:active { opacity: .85; transform: scale(.99); }
+.btn-primary:disabled { opacity: .4; }
 .btn-secondary {
   width: 100%;
   background: var(--card-2);
   color: var(--text);
-  padding: 12px;
-  border-radius: 12px;
+  padding: 13px;
+  border-radius: var(--r-md);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 15px;
   margin-top: 10px;
+  transition: background .15s;
 }
+.btn-secondary:active { background: var(--card-3); }
 .btn-danger {
   width: 100%;
   background: transparent;
   color: var(--despesa);
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   font-weight: 500;
-  font-size: 14px;
-  margin-top: 10px;
+  font-size: 14.5px;
+  margin-top: 8px;
+  transition: background .15s;
 }
-.btn-danger:active { background: rgba(220,38,38,.08); }
+.btn-danger:active { background: rgba(255,59,48,.1); }
 
+/* Color picker */
 .color-picker {
-  display: flex; gap: 8px; flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
 }
 .color-dot {
-  width: 32px; height: 32px;
+  width: 100%; aspect-ratio: 1;
   border-radius: 50%;
   border: 3px solid transparent;
   cursor: pointer;
+  transition: transform .12s;
 }
+.color-dot:active { transform: scale(.92); }
 .color-dot.selected { border-color: var(--text); }
+@media (prefers-color-scheme: dark) {
+  .color-dot.selected { border-color: #fff; }
+}
 
-/* ====== Bem detail ====== */
+/* =====================================================================
+   BEM DETAIL
+   ===================================================================== */
 .bem-detail-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 .stat-box {
-  background: var(--card-2);
-  padding: 12px;
-  border-radius: 10px;
+  background: var(--card);
+  padding: 14px;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-1);
 }
-.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
-.stat-valor { font-size: 16px; font-weight: 600; margin-top: 2px; }
+.stat-label {
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .04em;
+  font-weight: 500;
+}
+.stat-valor {
+  font-size: 17px; font-weight: 700;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.015em;
+}
 
-/* ====== Lock Screen ====== */
+/* =====================================================================
+   LOCK SCREEN
+   ===================================================================== */
 .lock-screen {
   position: fixed; inset: 0;
   background: var(--bg);
@@ -529,28 +963,28 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .lock-screen.open { display: flex; }
 .lock-icon {
   width: 64px; height: 64px;
-  border-radius: 50%;
-  background: var(--accent);
+  border-radius: 20px;
+  background: var(--tint);
   color: #fff;
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 20px rgba(5,150,105,.3);
+  margin-bottom: 18px;
+  box-shadow: 0 8px 28px rgba(52,199,89,.35);
 }
-.lock-title { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
-.lock-subtitle { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.lock-icon .ic { width: 28px; height: 28px; stroke-width: 2.2; }
+.lock-title { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.lock-subtitle { color: var(--muted); font-size: 14px; margin-top: 4px; text-align: center; }
 .lock-dots {
-  display: flex; gap: 14px;
-  margin: 32px 0;
+  display: flex; gap: 18px;
+  margin: 36px 0;
 }
 .lock-dots .dot {
   width: 14px; height: 14px;
   border-radius: 50%;
   background: var(--card-2);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--separator-strong);
   transition: all .15s;
 }
-.lock-dots .dot.filled { background: var(--accent); border-color: var(--accent); }
+.lock-dots .dot.filled { background: var(--text); border-color: var(--text); }
 .lock-screen.shake .lock-dots { animation: shake .35s; }
 @keyframes shake {
   0%,100% { transform: translateX(0); }
@@ -562,53 +996,170 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .pad {
   display: grid;
   grid-template-columns: repeat(3, 72px);
-  gap: 16px;
+  gap: 18px;
 }
 .pad-key {
   width: 72px; height: 72px;
   border-radius: 50%;
   background: var(--card);
   color: var(--text);
-  font-size: 26px;
-  font-weight: 500;
+  font-size: 28px;
+  font-weight: 400;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-1);
+  transition: transform .1s, background .15s;
 }
-.pad-key:active { background: var(--card-2); transform: scale(.96); }
+.pad-key:active { background: var(--card-2); transform: scale(.95); }
 .pad-key.del, .pad-key.action {
   background: transparent;
   box-shadow: none;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--text-2);
   font-weight: 500;
 }
 .pad-key.del:active, .pad-key.action:active { background: var(--card-2); }
+.pad-key.del .ic { width: 22px; height: 22px; }
 
-/* ====== Toast ====== */
+/* =====================================================================
+   TOAST
+   ===================================================================== */
 .toast {
   position: fixed;
   bottom: calc(100px + env(safe-area-inset-bottom));
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, 20px);
   background: var(--text);
   color: var(--bg);
   padding: 10px 18px;
-  border-radius: 100px;
+  border-radius: var(--r-pill);
   font-size: 14px;
   font-weight: 500;
   z-index: 300;
   opacity: 0;
-  transition: opacity .2s, transform .2s;
+  transition: opacity .22s, transform .22s var(--ease-out);
   pointer-events: none;
   white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  display: flex; align-items: center; gap: 8px;
+  max-width: calc(100vw - 32px);
 }
-.toast.show { opacity: 1; transform: translate(-50%, -8px); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast .ic { width: 16px; height: 16px; stroke-width: 2.4; }
+
+/* =====================================================================
+   CONFIRM DIALOG
+   ===================================================================== */
+.confirm-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.confirm-backdrop.open { display: flex; opacity: 1; }
+.confirm-dialog {
+  background: var(--bg-elev);
+  border-radius: var(--r-lg);
+  width: 100%;
+  max-width: 320px;
+  padding: 22px 22px 14px;
+  text-align: center;
+  transform: scale(.92);
+  transition: transform .2s var(--ease-spring);
+  box-shadow: var(--shadow-3);
+}
+.confirm-backdrop.open .confirm-dialog { transform: scale(1); }
+.confirm-title { font-size: 17px; font-weight: 700; letter-spacing: -.015em; }
+.confirm-msg { font-size: 13px; color: var(--muted-2); margin-top: 6px; line-height: 1.4; }
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 18px;
+}
+.confirm-actions button {
+  padding: 12px;
+  border-radius: var(--r-sm);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background .12s;
+}
+.confirm-actions .c-cancel { background: var(--card-2); color: var(--text); }
+.confirm-actions .c-cancel:active { background: var(--card-3); }
+.confirm-actions .c-ok { background: var(--tint); color: #fff; }
+.confirm-actions .c-ok.danger { background: var(--despesa); }
+.confirm-actions .c-ok:active { opacity: .85; }
+.confirm-actions.single { grid-template-columns: 1fr; }
+
+/* =====================================================================
+   MISC
+   ===================================================================== */
+.row-flex { display: flex; align-items: center; gap: 10px; }
+.spacer { flex: 1; }
+.muted-text { color: var(--muted); font-size: 13px; }
+.center { text-align: center; }
+.no-margin-top { margin-top: 0 !important; }
+
+/* PWA splash safe area */
+@supports (padding: env(safe-area-inset-top)) {
+  .lock-screen { padding-top: calc(24px + env(safe-area-inset-top)); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+}
+
+/* Small screens */
+@media (max-width: 360px) {
+  .patrimonio-valor { font-size: 30px; }
+  .pad { grid-template-columns: repeat(3, 66px); gap: 14px; }
+  .pad-key { width: 66px; height: 66px; }
+}
 </style>
 </head>
 <body>
 
-<div class="lock-screen" id="lock-screen">
-  <div class="lock-icon">◐</div>
+<!-- =====================================================================
+     SVG SPRITE
+     ===================================================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v4M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3M3 7h16a2 2 0 0 1 2 2v3"/><circle cx="17" cy="14" r="1.3"/></symbol>
+    <symbol id="i-gem" viewBox="0 0 24 24"><path d="m12 3 7 6-7 12L5 9z"/><path d="M5 9h14M12 3l-3 6h6z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 13 4 4L19 7"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 12H6l4-4M6 12l4 4"/></symbol>
+    <symbol id="i-equals" viewBox="0 0 24 24"><path d="M5 9h14M5 15h14"/></symbol>
+    <symbol id="i-diamond" viewBox="0 0 24 24"><path d="m12 3 9 9-9 9-9-9z"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3v18l2-2 2 2 2-2 2 2 2-2 2 2 2-2V3l-2 2-2-2-2 2-2-2-2 2-2-2-2 2z"/><path d="M9 9h6M9 13h6M9 17h3"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17 9 11l4 4 8-8"/><path d="M14 7h7v7"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><path d="M3 7v13a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7M2 3h20v4H2zM9 11h6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 3l3 3-3 3M20 6H7a3 3 0 0 0-3 3v2M7 21l-3-3 3-3M4 18h13a3 3 0 0 0 3-3v-2"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-width="2.2"/></symbol>
+  </defs>
+</svg>
+
+<!-- =====================================================================
+     LOCK SCREEN
+     ===================================================================== -->
+<div class="lock-screen" id="lock-screen" aria-hidden="true">
+  <div class="lock-icon"><svg class="ic"><use href="#i-lock"/></svg></div>
   <div class="lock-title">Finanças</div>
   <div class="lock-subtitle" id="lock-subtitle">Digite seu PIN</div>
   <div class="lock-dots" id="lock-dots">
@@ -626,32 +1177,41 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     <button class="pad-key" data-key="9">9</button>
     <button class="pad-key action" id="lock-cancel" data-key="cancel">Cancelar</button>
     <button class="pad-key" data-key="0">0</button>
-    <button class="pad-key del" data-key="del">⌫</button>
+    <button class="pad-key del" data-key="del" aria-label="Apagar"><svg class="ic"><use href="#i-back"/></svg></button>
   </div>
 </div>
 
+<!-- =====================================================================
+     APP
+     ===================================================================== -->
 <div id="app">
   <!-- Header -->
-  <div class="header">
+  <div class="header" id="app-header">
     <div class="month-nav">
-      <button id="prev-month" aria-label="Mês anterior">‹</button>
-      <div class="month-label" id="month-label">—</div>
-      <button id="next-month" aria-label="Próximo mês">›</button>
+      <button id="prev-month" aria-label="Mês anterior"><svg class="ic"><use href="#i-chevron-left"/></svg></button>
+      <div class="month-label" id="month-label">
+        <span class="ml-text">—</span>
+        <span class="ml-today" id="ml-today" title="Voltar para o mês atual">hoje</span>
+      </div>
+      <button id="next-month" aria-label="Próximo mês"><svg class="ic"><use href="#i-chevron-right"/></svg></button>
     </div>
-    <button class="icon-btn" id="btn-config" aria-label="Configurações">⚙</button>
+    <button class="icon-btn" id="btn-config" aria-label="Configurações"><svg class="ic"><use href="#i-settings"/></svg></button>
   </div>
 
   <!-- View: Início -->
   <div class="view active" id="view-inicio">
     <div class="patrimonio-card">
-      <div class="patrimonio-label">Patrimônio total</div>
+      <div class="patrimonio-label">
+        <span id="patrimonio-label-text">Patrimônio total</span>
+        <span class="pin-badge" id="patrimonio-pin" style="display:none;">retrospectivo</span>
+      </div>
       <div class="patrimonio-valor" id="patrimonio-valor">R$ 0,00</div>
       <div class="patrimonio-detail">
-        <div class="pd-item">
+        <div class="pd-item" id="pd-contas-item">
           <div class="pd-label">Em contas</div>
           <div class="pd-valor" id="pd-contas">R$ 0,00</div>
         </div>
-        <div class="pd-item">
+        <div class="pd-item" id="pd-bens-item">
           <div class="pd-label">Em bens</div>
           <div class="pd-valor" id="pd-bens">R$ 0,00</div>
         </div>
@@ -659,27 +1219,29 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     </div>
 
     <div class="mes-cards">
-      <div class="mes-card receita">
-        <div class="mc-icon">↓</div>
+      <div class="mes-card receita" data-filter="receita">
+        <div class="mc-row"><div class="mc-icon"><svg class="ic"><use href="#i-arrow-down"/></svg></div></div>
         <div class="mc-label">Receitas</div>
         <div class="mc-valor" id="mes-receitas">R$ 0,00</div>
       </div>
-      <div class="mes-card despesa">
-        <div class="mc-icon">↑</div>
+      <div class="mes-card despesa" data-filter="despesa">
+        <div class="mc-row"><div class="mc-icon"><svg class="ic"><use href="#i-arrow-up"/></svg></div></div>
         <div class="mc-label">Despesas</div>
         <div class="mc-valor" id="mes-despesas">R$ 0,00</div>
       </div>
       <div class="mes-card saldo">
-        <div class="mc-icon">=</div>
+        <div class="mc-row"><div class="mc-icon"><svg class="ic"><use href="#i-equals"/></svg></div></div>
         <div class="mc-label">Saldo do mês</div>
         <div class="mc-valor" id="mes-saldo">R$ 0,00</div>
       </div>
-      <div class="mes-card invest">
-        <div class="mc-icon">◆</div>
+      <div class="mes-card invest" data-filter="investimento">
+        <div class="mc-row"><div class="mc-icon"><svg class="ic"><use href="#i-diamond"/></svg></div></div>
         <div class="mc-label">Investido</div>
         <div class="mc-valor" id="mes-investido">R$ 0,00</div>
       </div>
     </div>
+
+    <div id="trend-wrap"></div>
 
     <div class="section-title">Despesas fixas</div>
     <div id="fixas-resumo"></div>
@@ -687,188 +1249,200 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     <div class="section-title">Gastos por categoria</div>
     <div id="cat-breakdown"></div>
 
-    <div class="section-title">Últimos lançamentos</div>
+    <div class="section-title">
+      <span>Últimos lançamentos</span>
+      <button class="st-action" id="st-ver-tudo">Ver todos ›</button>
+    </div>
     <div id="ultimos-lancamentos"></div>
   </div>
 
   <!-- View: Lançamentos -->
   <div class="view" id="view-lancamentos">
-    <div class="chips" id="lanc-filters" style="margin-top: 4px;">
-      <button class="chip active" data-filter="todos">Todos</button>
-      <button class="chip" data-filter="receita">Receitas</button>
-      <button class="chip" data-filter="despesa">Despesas</button>
-      <button class="chip" data-filter="transferencia">Transferências</button>
-      <button class="chip" data-filter="investimento">Investimentos</button>
+    <div class="search-bar" id="lanc-search-wrap">
+      <span class="sb-icon"><svg class="ic ic-sm"><use href="#i-search"/></svg></span>
+      <input type="text" id="lanc-search" placeholder="Buscar por descrição, categoria, conta…" autocomplete="off">
+      <button class="sb-clear" id="lanc-search-clear" aria-label="Limpar"><svg class="ic ic-sm"><use href="#i-close"/></svg></button>
     </div>
-    <div id="lancamentos-lista" style="margin-top: 12px;"></div>
+    <div class="chips" id="lanc-filters">
+      <button class="chip active" data-filter="todos">Todos</button>
+      <button class="chip t-receita" data-filter="receita">Receitas</button>
+      <button class="chip t-despesa" data-filter="despesa">Despesas</button>
+      <button class="chip t-transferencia" data-filter="transferencia">Transferências</button>
+      <button class="chip t-investimento" data-filter="investimento">Investimentos</button>
+    </div>
+    <div id="lanc-summary" style="margin-top: 10px;"></div>
+    <div id="lancamentos-lista" style="margin-top: 10px;"></div>
   </div>
 
   <!-- View: Contas -->
   <div class="view" id="view-contas">
-    <div class="section-title">Saldos</div>
+    <div class="card" id="contas-resumo" style="margin-top:4px;"></div>
+    <div class="section-title">Suas contas</div>
     <div id="contas-lista"></div>
-    <button class="add-row" id="btn-nova-conta" style="margin-top: 12px;">+ Nova conta</button>
+    <button class="add-row" id="btn-nova-conta" style="margin-top: 10px;">
+      <svg class="ic"><use href="#i-plus"/></svg> Nova conta
+    </button>
   </div>
 
   <!-- View: Bens -->
   <div class="view" id="view-bens">
-    <div class="section-title">Patrimônio</div>
+    <div class="card" id="bens-resumo" style="margin-top:4px;"></div>
+    <div class="section-title">Seus bens</div>
     <div id="bens-lista"></div>
-    <button class="add-row" id="btn-novo-bem" style="margin-top: 12px;">+ Novo bem</button>
+    <button class="add-row" id="btn-novo-bem" style="margin-top: 10px;">
+      <svg class="ic"><use href="#i-plus"/></svg> Novo bem
+    </button>
   </div>
 
   <!-- Bottom Nav -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-view="inicio">
-      <div class="ni-icon">⌂</div>
+      <div class="ni-icon"><svg class="ic"><use href="#i-home"/></svg></div>
       <div>Início</div>
     </button>
     <button class="nav-item" data-view="lancamentos">
-      <div class="ni-icon">≡</div>
+      <div class="ni-icon"><svg class="ic"><use href="#i-list"/></svg></div>
       <div>Lançamentos</div>
     </button>
     <div class="nav-item fab-slot"></div>
     <button class="nav-item" data-view="contas">
-      <div class="ni-icon">▢</div>
+      <div class="ni-icon"><svg class="ic"><use href="#i-wallet"/></svg></div>
       <div>Contas</div>
     </button>
     <button class="nav-item" data-view="bens">
-      <div class="ni-icon">◇</div>
+      <div class="ni-icon"><svg class="ic"><use href="#i-gem"/></svg></div>
       <div>Bens</div>
     </button>
   </nav>
 
-  <button class="fab" id="fab-lancar" aria-label="Novo lançamento">+</button>
+  <button class="fab" id="fab-lancar" aria-label="Novo lançamento">
+    <svg class="ic"><use href="#i-plus"/></svg>
+  </button>
 
   <div class="toast" id="toast"></div>
 </div>
 
-<!-- Modal: Lançar -->
+<!-- =====================================================================
+     MODAL: Lançamento
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-lancar">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
-      <div class="modal-title">Novo lançamento</div>
+      <div class="modal-title" id="lanc-modal-title">Novo lançamento</div>
       <button class="modal-close" data-close="modal-lancar">Cancelar</button>
     </div>
-
     <div class="tipo-tabs" id="tipo-tabs">
       <div class="tipo-tab active" data-tipo="receita">Receita</div>
       <div class="tipo-tab" data-tipo="despesa">Despesa</div>
       <div class="tipo-tab" data-tipo="transferencia">Transferir</div>
       <div class="tipo-tab" data-tipo="investimento">Investir</div>
     </div>
-
-    <input type="text" inputmode="decimal" class="amount-input" id="l-valor" placeholder="R$ 0,00">
-
+    <input type="text" inputmode="numeric" class="amount-input" id="l-valor" placeholder="R$ 0,00" autocomplete="off">
     <div class="modal-section">
-      <label>Descrição</label>
-      <input type="text" id="l-descricao" placeholder="Ex: Almoço, Salário, Reforma…">
+      <label class="fld-label">Descrição</label>
+      <input type="text" id="l-descricao" placeholder="Ex: Almoço, Salário, Reforma…" autocomplete="off" maxlength="60">
     </div>
-
     <div class="modal-section">
-      <label>Data</label>
+      <label class="fld-label">Data</label>
       <input type="date" id="l-data">
     </div>
-
-    <!-- Receita/Despesa -->
     <div class="modal-section" id="sec-conta">
-      <label>Conta</label>
+      <label class="fld-label">Conta</label>
       <select id="l-conta"></select>
     </div>
-
     <div class="modal-section" id="sec-categoria">
-      <label>Categoria</label>
+      <label class="fld-label">Categoria</label>
       <select id="l-categoria"></select>
     </div>
-
     <div class="modal-section" id="sec-bem-link" style="display:none;">
-      <label>Vincular a um bem (opcional)</label>
+      <label class="fld-label">Vincular a um bem (opcional)</label>
       <select id="l-bem-link"></select>
     </div>
-
-    <!-- Transferência / Investimento -->
     <div class="modal-section" id="sec-origem" style="display:none;">
-      <label>De (conta)</label>
+      <label class="fld-label">De (conta)</label>
       <select id="l-origem"></select>
     </div>
     <div class="modal-section" id="sec-destino" style="display:none;">
-      <label>Para (conta)</label>
+      <label class="fld-label">Para (conta)</label>
       <select id="l-destino"></select>
     </div>
     <div class="modal-section" id="sec-bem" style="display:none;">
-      <label>Bem</label>
+      <label class="fld-label">Bem</label>
       <select id="l-bem"></select>
     </div>
-
     <button class="btn-primary" id="l-salvar">Salvar</button>
+    <button class="btn-secondary" id="l-duplicar" style="display:none;">Duplicar como novo</button>
     <button class="btn-danger" id="l-excluir" style="display:none;">Excluir lançamento</button>
   </div>
 </div>
 
-<!-- Modal: Conta -->
+<!-- =====================================================================
+     MODAL: Conta
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-conta">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="conta-modal-title">Nova conta</div>
       <button class="modal-close" data-close="modal-conta">Cancelar</button>
     </div>
     <div class="modal-section">
-      <label>Nome</label>
-      <input type="text" id="c-nome" placeholder="Ex: Conta corrente Nubank">
+      <label class="fld-label">Nome</label>
+      <input type="text" id="c-nome" placeholder="Ex: Conta corrente Nubank" autocomplete="off" maxlength="40">
     </div>
     <div class="modal-section">
-      <label>Tipo</label>
-      <input type="text" id="c-tipo" placeholder="Ex: Corrente, Poupança, Fatura cartão, Investimento" list="conta-tipos">
+      <label class="fld-label">Tipo</label>
+      <input type="text" id="c-tipo" placeholder="Ex: Corrente, Poupança, Cartão" list="conta-tipos" autocomplete="off" maxlength="30">
       <datalist id="conta-tipos">
-        <option value="Conta corrente">
-        <option value="Poupança">
-        <option value="Fatura cartão">
-        <option value="Investimento">
-        <option value="Carteira">
-        <option value="Outro">
+        <option value="Conta corrente"><option value="Poupança"><option value="Fatura cartão">
+        <option value="Investimento"><option value="Carteira"><option value="Outro">
       </datalist>
     </div>
     <div class="modal-section">
-      <label>Saldo inicial</label>
-      <input type="text" inputmode="decimal" id="c-saldo" placeholder="R$ 0,00">
+      <label class="fld-label">Saldo inicial</label>
+      <input type="text" inputmode="numeric" id="c-saldo" placeholder="R$ 0,00" autocomplete="off">
+      <div class="helper">Ponto de partida da conta. Você pode editar a qualquer momento.</div>
     </div>
     <div class="modal-section">
-      <label>Cor</label>
+      <label class="fld-label">Cor</label>
       <div class="color-picker" id="c-cores"></div>
     </div>
     <button class="btn-primary" id="c-salvar">Salvar</button>
+    <button class="btn-secondary" id="c-ver-extrato" style="display:none;">Ver extrato</button>
     <button class="btn-danger" id="c-excluir" style="display:none;">Excluir conta</button>
   </div>
 </div>
 
-<!-- Modal: Bem -->
+<!-- =====================================================================
+     MODAL: Bem
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-bem">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="bem-modal-title">Novo bem</div>
       <button class="modal-close" data-close="modal-bem">Cancelar</button>
     </div>
     <div class="modal-section">
-      <label>Nome</label>
-      <input type="text" id="b-nome" placeholder="Ex: Casa, Terreno São Luís, Carro">
+      <label class="fld-label">Nome</label>
+      <input type="text" id="b-nome" placeholder="Ex: Casa, Terreno São Luís, Carro" autocomplete="off" maxlength="40">
     </div>
     <div class="modal-section">
-      <label>Tipo</label>
-      <input type="text" id="b-tipo" placeholder="Ex: Imóvel, Veículo, Reserva" list="bem-tipos">
+      <label class="fld-label">Tipo</label>
+      <input type="text" id="b-tipo" placeholder="Ex: Imóvel, Veículo, Reserva" list="bem-tipos" autocomplete="off" maxlength="30">
       <datalist id="bem-tipos">
-        <option value="Imóvel">
-        <option value="Veículo">
-        <option value="Terreno">
-        <option value="Reserva">
-        <option value="Outro">
+        <option value="Imóvel"><option value="Veículo"><option value="Terreno">
+        <option value="Reserva"><option value="Outro">
       </datalist>
     </div>
     <div class="modal-section">
-      <label>Valor estimado</label>
-      <input type="text" inputmode="decimal" id="b-valor" placeholder="R$ 0,00">
+      <label class="fld-label">Valor estimado</label>
+      <input type="text" inputmode="numeric" id="b-valor" placeholder="R$ 0,00" autocomplete="off">
+      <div class="helper">Valor base. Investimentos vinculados serão somados a este valor.</div>
     </div>
     <div class="modal-section">
-      <label>Cor</label>
+      <label class="fld-label">Cor</label>
       <div class="color-picker" id="b-cores"></div>
     </div>
     <button class="btn-primary" id="b-salvar">Salvar</button>
@@ -876,9 +1450,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   </div>
 </div>
 
-<!-- Modal: Detalhe do bem -->
+<!-- =====================================================================
+     MODAL: Detalhe do Bem
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-bem-detalhe">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="bd-title">Bem</div>
       <button class="modal-close" data-close="modal-bem-detalhe">Fechar</button>
@@ -907,26 +1484,65 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   </div>
 </div>
 
-<!-- Modal: Categoria -->
+<!-- =====================================================================
+     MODAL: Detalhe da Conta (extrato)
+     ===================================================================== -->
+<div class="modal-backdrop" id="modal-conta-detalhe">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="cd-title">Conta</div>
+      <button class="modal-close" data-close="modal-conta-detalhe">Fechar</button>
+    </div>
+    <div class="bem-detail-stats">
+      <div class="stat-box">
+        <div class="stat-label">Saldo atual</div>
+        <div class="stat-valor" id="cd-saldo">R$ 0,00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Saldo no mês</div>
+        <div class="stat-valor" id="cd-saldo-mes">R$ 0,00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Entradas (mês)</div>
+        <div class="stat-valor pos" id="cd-entradas">R$ 0,00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Saídas (mês)</div>
+        <div class="stat-valor neg" id="cd-saidas">R$ 0,00</div>
+      </div>
+    </div>
+    <div class="section-title">
+      <span>Movimentações do mês</span>
+    </div>
+    <div id="cd-historico"></div>
+    <button class="btn-secondary" id="cd-editar">Editar conta</button>
+  </div>
+</div>
+
+<!-- =====================================================================
+     MODAL: Categoria
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-categoria">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="cat-modal-title">Nova categoria</div>
       <button class="modal-close" data-close="modal-categoria">Cancelar</button>
     </div>
     <div class="modal-section">
-      <label>Nome</label>
-      <input type="text" id="cat-nome" placeholder="Ex: Alimentação">
+      <label class="fld-label">Nome</label>
+      <input type="text" id="cat-nome" placeholder="Ex: Alimentação" autocomplete="off" maxlength="30">
     </div>
     <div class="modal-section">
-      <label>Tipo</label>
+      <label class="fld-label">Tipo</label>
       <select id="cat-tipo">
         <option value="despesa">Despesa</option>
         <option value="receita">Receita</option>
       </select>
     </div>
     <div class="modal-section">
-      <label>Cor</label>
+      <label class="fld-label">Cor</label>
       <div class="color-picker" id="cat-cores"></div>
     </div>
     <button class="btn-primary" id="cat-salvar">Salvar</button>
@@ -934,53 +1550,64 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   </div>
 </div>
 
-<!-- Modal: Lista de fixas -->
+<!-- =====================================================================
+     MODAL: Lista de Fixas
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-fixas">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">Despesas fixas</div>
       <button class="modal-close" data-close="modal-fixas">Fechar</button>
     </div>
-    <div id="fixas-mes-info" style="text-align:center;padding:8px 0 16px;color:var(--muted);font-size:13px;"></div>
+    <div id="fixas-mes-info" style="text-align:center;padding:4px 0 14px;color:var(--muted);font-size:13px;"></div>
     <div id="fixas-lista"></div>
-    <button class="add-row" id="btn-nova-recorrencia" style="margin-top: 10px;">+ Nova despesa fixa</button>
+    <button class="add-row" id="btn-nova-recorrencia" style="margin-top: 10px;">
+      <svg class="ic"><use href="#i-plus"/></svg> Nova despesa fixa
+    </button>
   </div>
 </div>
 
-<!-- Modal: Recorrência (criar/editar) -->
+<!-- =====================================================================
+     MODAL: Recorrência
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-recorrencia">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="recorr-modal-title">Nova despesa fixa</div>
       <button class="modal-close" data-close="modal-recorrencia">Cancelar</button>
     </div>
     <div class="modal-section">
-      <label>Descrição</label>
-      <input type="text" id="r-nome" placeholder="Ex: Aluguel, Luz, Internet, Netflix">
+      <label class="fld-label">Descrição</label>
+      <input type="text" id="r-nome" placeholder="Ex: Aluguel, Luz, Internet, Netflix" autocomplete="off" maxlength="40">
     </div>
     <div class="modal-section">
-      <label>Valor sugerido</label>
-      <input type="text" inputmode="decimal" id="r-valor" placeholder="R$ 0,00">
+      <label class="fld-label">Valor sugerido</label>
+      <input type="text" inputmode="numeric" id="r-valor" placeholder="R$ 0,00" autocomplete="off">
     </div>
     <div class="modal-section">
-      <label>Dia do vencimento</label>
-      <input type="number" min="1" max="31" id="r-dia" placeholder="Ex: 10">
+      <label class="fld-label">Dia do vencimento</label>
+      <input type="number" min="1" max="31" id="r-dia" placeholder="Ex: 10" inputmode="numeric">
     </div>
     <div class="modal-section">
-      <label>Conta de pagamento</label>
+      <label class="fld-label">Conta de pagamento</label>
       <select id="r-conta"></select>
     </div>
     <div class="modal-section">
-      <label>Categoria</label>
+      <label class="fld-label">Categoria</label>
       <select id="r-categoria"></select>
     </div>
     <div class="modal-section">
-      <label>Vincular a um bem (opcional)</label>
+      <label class="fld-label">Vincular a um bem (opcional)</label>
       <select id="r-bem"></select>
     </div>
     <div class="modal-section">
       <div class="toggle">
-        <span>Ativa</span>
+        <div class="toggle-label">
+          <span>Ativa</span>
+          <span class="tl-sub">Aparece como pendente todo mês</span>
+        </div>
         <div class="toggle-switch on" id="r-ativa"></div>
       </div>
     </div>
@@ -989,27 +1616,30 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   </div>
 </div>
 
-<!-- Modal: Pagar recorrência -->
+<!-- =====================================================================
+     MODAL: Pagar Recorrência
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-pagar">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="pagar-modal-title">Pagar despesa fixa</div>
       <button class="modal-close" data-close="modal-pagar">Cancelar</button>
     </div>
     <div class="modal-section">
-      <label>Descrição</label>
+      <label class="fld-label">Descrição</label>
       <input type="text" id="p-desc" disabled>
     </div>
     <div class="modal-section">
-      <label>Valor pago</label>
-      <input type="text" inputmode="decimal" id="p-valor">
+      <label class="fld-label">Valor pago</label>
+      <input type="text" inputmode="numeric" id="p-valor" autocomplete="off">
     </div>
     <div class="modal-section">
-      <label>Data do pagamento</label>
+      <label class="fld-label">Data do pagamento</label>
       <input type="date" id="p-data">
     </div>
     <div class="modal-section">
-      <label>Conta</label>
+      <label class="fld-label">Conta</label>
       <select id="p-conta"></select>
     </div>
     <button class="btn-primary" id="p-confirmar">Confirmar pagamento</button>
@@ -1017,14 +1647,21 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   </div>
 </div>
 
-<!-- Modal: Config -->
+<!-- =====================================================================
+     MODAL: Config
+     ===================================================================== -->
 <div class="modal-backdrop" id="modal-config">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">Configurações</div>
       <button class="modal-close" data-close="modal-config">Fechar</button>
     </div>
-    <button class="btn-secondary" id="btn-abrir-fixas" style="margin-top: 8px;">Despesas fixas</button>
+
+    <div class="section-title no-margin-top" style="margin-top:8px;">Atalhos</div>
+    <button class="btn-secondary" id="btn-abrir-fixas">
+      Despesas fixas
+    </button>
 
     <div class="section-title">Segurança</div>
     <div id="pin-status"></div>
@@ -1033,37 +1670,70 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 
     <div class="section-title">Categorias</div>
     <div id="config-categorias"></div>
-    <button class="add-row" id="btn-nova-categoria" style="margin-top: 10px;">+ Nova categoria</button>
+    <button class="add-row" id="btn-nova-categoria" style="margin-top: 10px;">
+      <svg class="ic"><use href="#i-plus"/></svg> Nova categoria
+    </button>
 
     <div class="section-title">Dados</div>
-    <button class="btn-secondary" id="btn-exportar">Exportar (JSON)</button>
-    <button class="btn-secondary" id="btn-importar">Importar (JSON)</button>
-    <input type="file" id="file-importar" accept="application/json" style="display:none;">
-    <button class="btn-danger" id="btn-reset">Apagar tudo</button>
+    <button class="btn-secondary" id="btn-exportar">Exportar backup (JSON)</button>
+    <button class="btn-secondary" id="btn-importar">Importar backup (JSON)</button>
+    <input type="file" id="file-importar" accept="application/json,.json" style="display:none;">
+    <button class="btn-danger" id="btn-reset">Apagar todos os dados</button>
+
+    <div class="section-title">Sobre</div>
+    <div class="card muted" style="font-size:12.5px;color:var(--muted);text-align:center;line-height:1.5;">
+      Finanças — controle pessoal de patrimônio<br>
+      Dados salvos somente neste aparelho.<br>
+      <span id="about-version" style="font-size:11px;opacity:.7;"></span>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================================
+     CONFIRM DIALOG
+     ===================================================================== -->
+<div class="confirm-backdrop" id="confirm-backdrop">
+  <div class="confirm-dialog">
+    <div class="confirm-title" id="confirm-title">Confirmar</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-actions" id="confirm-actions">
+      <button class="c-cancel" id="confirm-cancel">Cancelar</button>
+      <button class="c-ok" id="confirm-ok">Confirmar</button>
+    </div>
   </div>
 </div>
 
 <script>
-/* ============================================================
-   DADOS
-   ============================================================ */
+'use strict';
+
+/* =====================================================================
+   CONSTANTES E DADOS
+   ===================================================================== */
+const APP_VERSION = '3.0';
 const DB_KEY = 'financas:db:v1';
 const PIN_KEY = 'financas:pin:v1';
-const CORES = ['#059669','#10b981','#22c55e','#3b82f6','#6366f1','#8b5cf6','#ec4899','#f43f5e','#f59e0b','#d97706','#84cc16','#06b6d4','#64748b','#475569'];
+const PIN_SALT_KEY = 'financas:pinSalt:v1';
+
+// Paleta de cores (categorias, contas, bens). Mantida estável p/ compat.
+const CORES = [
+  '#34c759','#30d158','#28cd41','#5856d6','#5e5ce6','#007aff','#0a84ff',
+  '#ff9500','#ff9f0a','#ff3b30','#ff453a','#ff2d55','#bf5af2','#af52de',
+  '#64d2ff','#5ac8fa','#ffd60a','#ffcc00','#a2845e','#8e8e93','#48484a'
+];
 
 const DEFAULT_CATEGORIAS = [
-  {id:'cat-sal',  nome:'Salário',     tipo:'receita', cor:'#059669'},
-  {id:'cat-fre',  nome:'Freelance',   tipo:'receita', cor:'#22c55e'},
-  {id:'cat-out',  nome:'Outras',      tipo:'receita', cor:'#10b981'},
-  {id:'cat-ali',  nome:'Alimentação', tipo:'despesa', cor:'#f59e0b'},
-  {id:'cat-tra',  nome:'Transporte',  tipo:'despesa', cor:'#3b82f6'},
-  {id:'cat-mor',  nome:'Moradia',     tipo:'despesa', cor:'#dc2626'},
-  {id:'cat-laz',  nome:'Lazer',       tipo:'despesa', cor:'#ec4899'},
-  {id:'cat-sau',  nome:'Saúde',       tipo:'despesa', cor:'#06b6d4'},
-  {id:'cat-edu',  nome:'Educação',    tipo:'despesa', cor:'#6366f1'},
-  {id:'cat-man',  nome:'Manutenção',  tipo:'despesa', cor:'#64748b'},
-  {id:'cat-imp',  nome:'Impostos',    tipo:'despesa', cor:'#475569'},
-  {id:'cat-out2', nome:'Outros',      tipo:'despesa', cor:'#8b5cf6'}
+  {id:'cat-sal',  nome:'Salário',     tipo:'receita', cor:'#34c759'},
+  {id:'cat-fre',  nome:'Freelance',   tipo:'receita', cor:'#30d158'},
+  {id:'cat-out',  nome:'Outras',      tipo:'receita', cor:'#28cd41'},
+  {id:'cat-ali',  nome:'Alimentação', tipo:'despesa', cor:'#ff9500'},
+  {id:'cat-tra',  nome:'Transporte',  tipo:'despesa', cor:'#0a84ff'},
+  {id:'cat-mor',  nome:'Moradia',     tipo:'despesa', cor:'#ff3b30'},
+  {id:'cat-laz',  nome:'Lazer',       tipo:'despesa', cor:'#ff2d55'},
+  {id:'cat-sau',  nome:'Saúde',       tipo:'despesa', cor:'#64d2ff'},
+  {id:'cat-edu',  nome:'Educação',    tipo:'despesa', cor:'#5856d6'},
+  {id:'cat-man',  nome:'Manutenção',  tipo:'despesa', cor:'#8e8e93'},
+  {id:'cat-imp',  nome:'Impostos',    tipo:'despesa', cor:'#48484a'},
+  {id:'cat-out2', nome:'Outros',      tipo:'despesa', cor:'#bf5af2'}
 ];
 
 let DB = loadDB();
@@ -1073,10 +1743,21 @@ function loadDB() {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
       const db = JSON.parse(raw);
-      if (!db.recorrencias) db.recorrencias = [];
+      // Migrações leves
+      if (!db.version) db.version = 1;
+      if (!Array.isArray(db.contas))      db.contas = [];
+      if (!Array.isArray(db.bens))        db.bens = [];
+      if (!Array.isArray(db.categorias))  db.categorias = [...DEFAULT_CATEGORIAS];
+      if (!Array.isArray(db.lancamentos)) db.lancamentos = [];
+      if (!Array.isArray(db.recorrencias))db.recorrencias = [];
+      // Sane defaults p/ lançamentos antigos
+      for (const l of db.lancamentos) {
+        if (typeof l.criadoEm !== 'number') l.criadoEm = Date.parse(l.data || '') || Date.now();
+        if (typeof l.valor !== 'number')    l.valor = Number(l.valor) || 0;
+      }
       return db;
     }
-  } catch (e) { console.warn('Falha ao ler DB', e); }
+  } catch (e) { console.warn('Falha ao ler DB; usando vazio.', e); }
   return {
     version: 1,
     contas: [],
@@ -1091,73 +1772,194 @@ function saveDB() {
   try {
     localStorage.setItem(DB_KEY, JSON.stringify(DB));
   } catch (e) {
-    toast('Erro ao salvar');
     console.error(e);
+    toast('Erro ao salvar — armazenamento cheio?', 'err');
   }
 }
 
-/* ============================================================
+/* =====================================================================
    HELPERS
-   ============================================================ */
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+   ===================================================================== */
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
 function esc(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
 }
 
 function fmtBRL(n) {
-  return (n || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  return (Number(n) || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
 }
 
+function fmtBRLcompact(n) {
+  const v = Math.abs(Number(n) || 0);
+  if (v >= 1_000_000) return (v / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + 'M';
+  if (v >= 10_000)    return (v / 1_000).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + 'k';
+  return v.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+}
+
+// Converte string com formato BR (1.234,56) ou número em number
 function parseValor(s) {
   if (typeof s === 'number') return s;
-  s = String(s||'').replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
-  return parseFloat(s) || 0;
+  if (s == null) return 0;
+  let str = String(s).trim();
+  if (!str) return 0;
+  // Remove R$, espaços, e símbolos. Mantém dígitos, vírgula, ponto e sinal
+  str = str.replace(/R\$\s?/gi, '').replace(/[^\d,.-]/g, '');
+  // Se houver vírgula, ela é o separador decimal; pontos são milhar
+  if (str.includes(',')) {
+    str = str.replace(/\./g, '').replace(',', '.');
+  }
+  const n = parseFloat(str);
+  return isFinite(n) ? n : 0;
 }
+
+// Datas LOCAIS (corrige bug do toISOString UTC)
+function localISO(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function hoje() { return localISO(new Date()); }
+function mesIso(d = new Date()) { return localISO(d).slice(0, 7); }
+function mesPertence(iso, mes) { return iso && iso.slice(0, 7) === mes; }
 
 function fmtData(iso) {
   if (!iso) return '';
-  const [y,m,d] = iso.split('-');
+  const [y, m, d] = iso.split('-');
   return `${d}/${m}/${y}`;
 }
 
-function mesIso(d = new Date()) {
-  return d.toISOString().slice(0,7);
+function fmtDataCurta(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  const mm = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][parseInt(m,10)-1];
+  return `${d} ${mm}`;
 }
 
-function hoje() { return new Date().toISOString().slice(0,10); }
-
-function mesPertence(iso, mes) { return iso && iso.slice(0,7) === mes; }
+function capFirst(s) {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 function nomeMes(mes) {
-  const [y,m] = mes.split('-').map(Number);
-  const d = new Date(y, m-1, 1);
-  return d.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+  const [y, m] = mes.split('-').map(Number);
+  const d = new Date(y, m - 1, 1);
+  return capFirst(d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
+}
+
+function nomeMesCurto(mes) {
+  const [y, m] = mes.split('-').map(Number);
+  const d = new Date(y, m - 1, 1);
+  return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
 }
 
 function navMes(mes, delta) {
-  const [y,m] = mes.split('-').map(Number);
-  const d = new Date(y, m-1+delta, 1);
+  const [y, m] = mes.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
   return mesIso(d);
 }
 
-let _toastTimer = null;
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-/* ============================================================
-   CÁLCULOS
-   ============================================================ */
 function ultimoDiaMes(mes) {
   const [y, m] = mes.split('-').map(Number);
   return `${mes}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
 }
 
+function diaSeguroNoMes(mes, dia) {
+  const [y, m] = mes.split('-').map(Number);
+  const ultimoDia = new Date(y, m, 0).getDate();
+  const d = Math.min(Math.max(1, parseInt(dia, 10) || 1), ultimoDia);
+  return `${mes}-${String(d).padStart(2, '0')}`;
+}
+
+function vibrate(ms = 8) {
+  try { if (navigator.vibrate) navigator.vibrate(ms); } catch (_) {}
+}
+
+/* =====================================================================
+   TOAST + CONFIRM
+   ===================================================================== */
+let _toastTimer = null;
+function toast(msg, kind = 'ok') {
+  const t = document.getElementById('toast');
+  const icon = kind === 'err' ? 'i-info' : kind === 'ok' ? 'i-check' : 'i-info';
+  t.innerHTML = `<svg class="ic"><use href="#${icon}"/></svg><span>${esc(msg)}</span>`;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function confirmDialog({ title = 'Confirmar', msg = '', okText = 'Confirmar', cancelText = 'Cancelar', danger = false } = {}) {
+  return new Promise((resolve) => {
+    const back = document.getElementById('confirm-backdrop');
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-msg').textContent = msg;
+    const okBtn = document.getElementById('confirm-ok');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    okBtn.textContent = okText;
+    cancelBtn.textContent = cancelText;
+    okBtn.classList.toggle('danger', !!danger);
+    back.classList.add('open');
+    const cleanup = (val) => {
+      back.classList.remove('open');
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      back.onclick = null;
+      resolve(val);
+    };
+    okBtn.onclick = () => { vibrate(6); cleanup(true); };
+    cancelBtn.onclick = () => cleanup(false);
+    back.onclick = (e) => { if (e.target === back) cleanup(false); };
+  });
+}
+
+/* =====================================================================
+   MÁSCARA DE MOEDA (centavos -> "R$ 1.234,56")
+   ===================================================================== */
+function applyCurrencyMask(input) {
+  if (!input || input._maskBound) return;
+  input._maskBound = true;
+  input.type = 'text';
+  input.setAttribute('inputmode', 'numeric');
+
+  const format = (digits) => {
+    digits = (digits || '').replace(/\D/g, '').slice(0, 13);
+    if (!digits) return '';
+    const cents = parseInt(digits, 10);
+    return (cents / 100).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+  };
+
+  // Inicializa com valor existente (number ou string)
+  input.setMaskedValue = (numOrStr) => {
+    const n = typeof numOrStr === 'number' ? numOrStr : parseValor(numOrStr);
+    if (!n) { input.value = ''; return; }
+    const cents = Math.round(n * 100);
+    input.value = format(String(cents));
+  };
+
+  input.getMaskedNumber = () => {
+    const digits = (input.value || '').replace(/\D/g, '');
+    return digits ? parseInt(digits, 10) / 100 : 0;
+  };
+
+  input.addEventListener('input', () => {
+    const digits = input.value.replace(/\D/g, '');
+    input.value = format(digits);
+    // Mantém cursor no fim
+    requestAnimationFrame(() => {
+      try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
+    });
+  });
+  input.addEventListener('focus', () => {
+    if (!input.value) input.value = '';
+  });
+}
+
+/* =====================================================================
+   CÁLCULOS
+   ===================================================================== */
 function saldoConta(contaId, ateMes = null) {
   const c = DB.contas.find(x => x.id === contaId);
   if (!c) return 0;
@@ -1177,6 +1979,29 @@ function saldoConta(contaId, ateMes = null) {
   return s;
 }
 
+function movsContaMes(contaId, mes) {
+  let entradas = 0, saidas = 0;
+  for (const l of DB.lancamentos) {
+    if (!mesPertence(l.data, mes)) continue;
+    if (l.tipo === 'receita' && l.contaId === contaId) entradas += l.valor;
+    else if (l.tipo === 'despesa' && l.contaId === contaId) saidas += l.valor;
+    else if (l.tipo === 'transferencia') {
+      if (l.contaDestinoId === contaId) entradas += l.valor;
+      if (l.contaOrigemId === contaId) saidas += l.valor;
+    } else if (l.tipo === 'investimento' && l.contaOrigemId === contaId) {
+      saidas += l.valor;
+    }
+  }
+  return { entradas, saidas, saldoMes: entradas - saidas };
+}
+
+function lancamentosDaConta(contaId, mes = null) {
+  return DB.lancamentos.filter(l => {
+    if (mes && !mesPertence(l.data, mes)) return false;
+    return l.contaId === contaId || l.contaOrigemId === contaId || l.contaDestinoId === contaId;
+  });
+}
+
 function valorBem(bemId, ateMes = null) {
   const b = DB.bens.find(x => x.id === bemId);
   if (!b) return 0;
@@ -1190,27 +2015,21 @@ function valorBem(bemId, ateMes = null) {
 }
 
 function totalInvestidoBem(bemId) {
-  let t = 0;
-  for (const l of DB.lancamentos) {
-    if (l.tipo === 'investimento' && l.bemId === bemId) t += l.valor;
-  }
-  return t;
+  return DB.lancamentos
+    .filter(l => l.tipo === 'investimento' && l.bemId === bemId)
+    .reduce((s, l) => s + l.valor, 0);
 }
 
 function gastosBem(bemId, mes = null) {
-  let t = 0;
-  for (const l of DB.lancamentos) {
-    if (l.tipo === 'despesa' && l.bemId === bemId) {
-      if (!mes || mesPertence(l.data, mes)) t += l.valor;
-    }
-  }
-  return t;
+  return DB.lancamentos
+    .filter(l => l.tipo === 'despesa' && l.bemId === bemId && (!mes || mesPertence(l.data, mes)))
+    .reduce((s, l) => s + l.valor, 0);
 }
 
-function patrimonioTotal() {
+function patrimonioTotal(ateMes = null) {
   let total = 0;
-  for (const c of DB.contas) total += saldoConta(c.id);
-  for (const b of DB.bens) total += valorBem(b.id);
+  for (const c of DB.contas) total += saldoConta(c.id, ateMes);
+  for (const b of DB.bens) total += valorBem(b.id, ateMes);
   return total;
 }
 
@@ -1222,25 +2041,13 @@ function totaisDoMes(mes) {
     else if (l.tipo === 'despesa') {
       despesas += l.valor;
       if (l.recorrenciaId) fixas += l.valor;
-    }
-    else if (l.tipo === 'investimento') invest += l.valor;
+    } else if (l.tipo === 'investimento') invest += l.valor;
   }
   return { receitas, despesas, invest, fixas, variaveis: despesas - fixas, saldo: receitas - despesas };
 }
 
 function recorrenciaPaga(rId, mes) {
   return DB.lancamentos.find(l => l.recorrenciaId === rId && mesPertence(l.data, mes));
-}
-
-function totalRecorrenciasMes() {
-  return DB.recorrencias.filter(r => r.ativa).reduce((s, r) => s + (r.valor || 0), 0);
-}
-
-function diaSeguroNoMes(mes, dia) {
-  const [y, m] = mes.split('-').map(Number);
-  const ultimoDia = new Date(y, m, 0).getDate();
-  const d = Math.min(Math.max(1, dia || 1), ultimoDia);
-  return `${mes}-${String(d).padStart(2, '0')}`;
 }
 
 function gastosPorCategoria(mes) {
@@ -1253,20 +2060,33 @@ function gastosPorCategoria(mes) {
   return Object.entries(map)
     .map(([catId, valor]) => {
       const cat = DB.categorias.find(c => c.id === catId);
-      return { catId, nome: cat?.nome || 'Sem categoria', cor: cat?.cor || '#94a3b8', valor };
+      return { catId, nome: cat?.nome || 'Sem categoria', cor: cat?.cor || '#8e8e93', valor };
     })
-    .sort((a,b) => b.valor - a.valor);
+    .sort((a, b) => b.valor - a.valor);
 }
 
-/* ============================================================
+// Lança 5 meses anteriores + atual
+function tendenciaMeses(mesRef) {
+  const out = [];
+  for (let i = 5; i >= 0; i--) {
+    const m = navMes(mesRef, -i);
+    const t = totaisDoMes(m);
+    out.push({ mes: m, receitas: t.receitas, despesas: t.despesas });
+  }
+  return out;
+}
+
+/* =====================================================================
    ESTADO DA UI
-   ============================================================ */
+   ===================================================================== */
 let currentMes = mesIso();
 let currentView = 'inicio';
 let currentLancFilter = 'todos';
+let currentLancSearch = '';
 let editingLancId = null;
 let editingContaId = null;
 let editingBemId = null;
+let viewingContaId = null;
 let editingCategoriaId = null;
 let editingRecorrenciaId = null;
 let pagandoRecorrenciaId = null;
@@ -1275,70 +2095,150 @@ let selectedCorConta = CORES[0];
 let selectedCorBem = CORES[2];
 let selectedCorCat = CORES[0];
 
-/* ============================================================
-   RENDER
-   ============================================================ */
+/* =====================================================================
+   RENDER — DISPATCHER
+   ===================================================================== */
 function render() {
-  document.getElementById('month-label').textContent = nomeMes(currentMes);
+  const txt = document.querySelector('#month-label .ml-text');
+  txt.textContent = nomeMes(currentMes);
+  const hojeMes = mesIso();
+  document.getElementById('month-label').classList.toggle('is-other', currentMes !== hojeMes);
+
   if (currentView === 'inicio') renderInicio();
   else if (currentView === 'lancamentos') renderLancamentos();
   else if (currentView === 'contas') renderContas();
   else if (currentView === 'bens') renderBens();
 }
 
+/* =====================================================================
+   VIEW: INÍCIO
+   ===================================================================== */
 function renderInicio() {
   const mesAtual = mesIso();
   const ateMes = (currentMes < mesAtual) ? currentMes : null;
-  const totalContas = DB.contas.reduce((s,c) => s + saldoConta(c.id, ateMes), 0);
-  const totalBens = DB.bens.reduce((s,b) => s + valorBem(b.id, ateMes), 0);
+
+  const totalContas = DB.contas.reduce((s, c) => s + saldoConta(c.id, ateMes), 0);
+  const totalBens = DB.bens.reduce((s, b) => s + valorBem(b.id, ateMes), 0);
+
   document.getElementById('patrimonio-valor').textContent = fmtBRL(totalContas + totalBens);
   document.getElementById('pd-contas').textContent = fmtBRL(totalContas);
   document.getElementById('pd-bens').textContent = fmtBRL(totalBens);
-  document.querySelector('.patrimonio-label').textContent = ateMes ? `Patrimônio no fim de ${nomeMes(currentMes)}` : 'Patrimônio total';
+  document.getElementById('patrimonio-label-text').textContent =
+    ateMes ? `Patrimônio no fim de ${nomeMesCurto(currentMes)}` : 'Patrimônio total';
+  document.getElementById('patrimonio-pin').style.display = ateMes ? '' : 'none';
 
   const t = totaisDoMes(currentMes);
   document.getElementById('mes-receitas').textContent = fmtBRL(t.receitas);
   document.getElementById('mes-despesas').textContent = fmtBRL(t.despesas);
-  document.getElementById('mes-saldo').textContent = fmtBRL(t.saldo);
+  const sEl = document.getElementById('mes-saldo');
+  sEl.textContent = fmtBRL(t.saldo);
+  sEl.classList.remove('pos', 'neg');
+  if (t.saldo > 0) sEl.classList.add('pos');
+  else if (t.saldo < 0) sEl.classList.add('neg');
   document.getElementById('mes-investido').textContent = fmtBRL(t.invest);
 
+  renderTrend();
   renderFixasResumo();
+  renderCatBreakdown(t.despesas);
+  renderUltimosLancamentos();
+}
 
-  // categorias
+function renderTrend() {
+  const trend = tendenciaMeses(currentMes);
+  const maxV = Math.max(1, ...trend.flatMap(m => [m.receitas, m.despesas]));
+  const el = document.getElementById('trend-wrap');
+  const temDados = trend.some(m => m.receitas > 0 || m.despesas > 0);
+  if (!temDados) { el.innerHTML = ''; return; }
+  const cols = trend.map(m => {
+    const rH = Math.round(m.receitas / maxV * 100);
+    const dH = Math.round(m.despesas / maxV * 100);
+    const isCurrent = m.mes === currentMes;
+    const onClick = `currentMes='${m.mes}'; render();`;
+    return `
+      <div class="trend-col ${isCurrent ? 'current' : ''}" onclick="${onClick}">
+        <div class="tc-pair">
+          <div class="tc-bar r" style="height:${Math.max(2, rH)}%"></div>
+          <div class="tc-bar d" style="height:${Math.max(2, dH)}%"></div>
+        </div>
+        <div class="tc-label">${esc(nomeMesCurto(m.mes))}</div>
+      </div>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="trend-card">
+      <div class="trend-head">
+        <div class="th-title">Últimos 6 meses</div>
+        <div class="th-legend">
+          <span><i style="background:var(--receita);"></i>receita</span>
+          <span><i style="background:var(--despesa);"></i>despesa</span>
+        </div>
+      </div>
+      <div class="trend-bars">${cols}</div>
+    </div>`;
+}
+
+function renderCatBreakdown(totalDespesa) {
   const cats = gastosPorCategoria(currentMes);
-  const totalDespesa = cats.reduce((s,c) => s + c.valor, 0);
   const catEl = document.getElementById('cat-breakdown');
   if (cats.length === 0) {
-    catEl.innerHTML = '<div class="card" style="text-align:center;color:var(--muted);font-size:13px;">Sem despesas neste mês</div>';
-  } else {
-    catEl.innerHTML = '<div class="list">' + cats.map(c => {
-      const pct = totalDespesa ? Math.round(c.valor / totalDespesa * 100) : 0;
-      return `
-        <div class="list-item">
-          <div class="li-icon" style="background:${esc(c.cor)};">${esc(c.nome.charAt(0).toUpperCase())}</div>
-          <div class="li-body">
-            <div class="li-title">${esc(c.nome)}</div>
-            <div class="li-sub">${pct}% do mês</div>
-          </div>
-          <div class="li-right"><div class="li-valor neg">${fmtBRL(c.valor)}</div></div>
-        </div>`;
-    }).join('') + '</div>';
+    catEl.innerHTML = `
+      <div class="card muted center" style="font-size:13px;">
+        Sem despesas neste mês
+      </div>`;
+    return;
   }
+  catEl.innerHTML = '<div class="list">' + cats.map(c => {
+    const pct = totalDespesa ? Math.round(c.valor / totalDespesa * 100) : 0;
+    return `
+      <div class="list-item tappable" onclick="filtrarPorCategoria('${esc(c.catId)}')">
+        <div class="li-icon" style="background:${esc(c.cor)};">${esc((c.nome[0] || '?').toUpperCase())}</div>
+        <div class="li-body">
+          <div class="li-title">${esc(c.nome)}</div>
+          <div class="li-sub">${pct}% do mês</div>
+        </div>
+        <div class="li-right">
+          <div class="li-valor neg">${fmtBRL(c.valor)}</div>
+        </div>
+      </div>`;
+  }).join('') + '</div>';
+}
 
-  // últimos
+function filtrarPorCategoria(catId) {
+  const cat = DB.categorias.find(c => c.id === catId);
+  if (!cat) return;
+  setView('lancamentos');
+  currentLancFilter = cat.tipo;
+  currentLancSearch = cat.nome;
+  document.querySelectorAll('#lanc-filters .chip').forEach(x => x.classList.toggle('active', x.dataset.filter === cat.tipo));
+  const inp = document.getElementById('lanc-search');
+  inp.value = cat.nome;
+  document.getElementById('lanc-search-wrap').classList.add('has-text');
+  renderLancamentos();
+}
+
+function renderUltimosLancamentos() {
   const ult = [...DB.lancamentos]
     .filter(l => mesPertence(l.data, currentMes))
-    .sort((a,b) => (b.data + b.id).localeCompare(a.data + a.id))
+    .sort(ordenaLancs)
     .slice(0, 5);
   document.getElementById('ultimos-lancamentos').innerHTML = ult.length
     ? '<div class="list">' + ult.map(lancItemHTML).join('') + '</div>'
-    : '<div class="card" style="text-align:center;color:var(--muted);font-size:13px;">Nenhum lançamento neste mês</div>';
+    : '<div class="card muted center" style="font-size:13px;">Nenhum lançamento neste mês</div>';
 }
 
+function ordenaLancs(a, b) {
+  if (b.data !== a.data) return b.data.localeCompare(a.data);
+  return (b.criadoEm || 0) - (a.criadoEm || 0);
+}
+
+/* =====================================================================
+   ITEM DE LANÇAMENTO
+   ===================================================================== */
+const SINAIS = { receita: 'i-arrow-down', despesa: 'i-arrow-up', transferencia: 'i-swap', investimento: 'i-diamond' };
+const SINAL_PREFIXO = { receita: '+ ', despesa: '− ', transferencia: '', investimento: '' };
+const CLASSES = { receita: 'pos', despesa: 'neg', transferencia: 'neutral', investimento: 'neutral' };
+const CORES_TIPO = { receita: 'var(--receita)', despesa: 'var(--despesa)', transferencia: 'var(--transfer)', investimento: 'var(--invest)' };
+
 function lancItemHTML(l) {
-  const sinais = { receita: '+', despesa: '−', transferencia: '↔', investimento: '◆' };
-  const classes = { receita: 'pos', despesa: 'neg', transferencia: 'neutral', investimento: 'neutral' };
-  const cores = { receita: 'var(--receita)', despesa: 'var(--despesa)', transferencia: 'var(--transfer)', investimento: 'var(--invest)' };
   let sub = '';
   if (l.tipo === 'receita') {
     const cat = DB.categorias.find(c => c.id === l.categoriaId);
@@ -1358,21 +2258,27 @@ function lancItemHTML(l) {
     const b = DB.bens.find(x => x.id === l.bemId);
     sub = `${o?.nome || '?'} → ${b?.nome || '?'}`;
   }
-  const selo = l.recorrenciaId ? '<span class="badge-fixa">fixa</span>' : '';
+  const selo = l.recorrenciaId ? '<span class="badge fixa">fixa</span>' : '';
+  const prefixo = SINAL_PREFIXO[l.tipo] || '';
   return `
-    <div class="list-item" onclick="abrirLancamento('${esc(l.id)}')">
-      <div class="li-icon" style="background:${cores[l.tipo]};">${sinais[l.tipo]}</div>
+    <div class="list-item tappable" onclick="abrirLancamento('${esc(l.id)}')">
+      <div class="li-icon" style="background:${CORES_TIPO[l.tipo]};">
+        <svg class="ic"><use href="#${SINAIS[l.tipo]}"/></svg>
+      </div>
       <div class="li-body">
         <div class="li-title">${esc(l.descricao || '(sem descrição)')}${selo}</div>
         <div class="li-sub">${esc(sub)}</div>
       </div>
       <div class="li-right">
-        <div class="li-valor ${classes[l.tipo]}">${fmtBRL(l.valor)}</div>
-        <div class="li-date">${esc(fmtData(l.data))}</div>
+        <div class="li-valor ${CLASSES[l.tipo]}">${prefixo}${fmtBRL(l.valor)}</div>
+        <div class="li-date">${esc(fmtDataCurta(l.data))}</div>
       </div>
     </div>`;
 }
 
+/* =====================================================================
+   FIXAS — RESUMO NO INÍCIO
+   ===================================================================== */
 function renderFixasResumo() {
   const ativas = DB.recorrencias.filter(r => r.ativa);
   const el = document.getElementById('fixas-resumo');
@@ -1383,84 +2289,170 @@ function renderFixasResumo() {
     return;
   }
   const totalPrevisto = ativas.reduce((s, r) => s + (r.valor || 0), 0);
-  let totalPago = 0, pagas = 0;
+  let totalPago = 0, pagas = 0, atrasadas = 0;
+  const hojeStr = hoje();
+  const isMesAtual = currentMes === mesIso();
   for (const r of ativas) {
     const l = recorrenciaPaga(r.id, currentMes);
     if (l) { totalPago += l.valor; pagas++; }
+    else if (isMesAtual && diaSeguroNoMes(currentMes, r.diaVencimento) < hojeStr) atrasadas++;
   }
   const pct = totalPrevisto ? Math.min(100, Math.round(totalPago / totalPrevisto * 100)) : 0;
   const completo = pagas === ativas.length && ativas.length > 0;
+  const barClass = completo ? 'full' : (atrasadas ? 'late' : '');
+  let statusTxt = `${pagas} de ${ativas.length} pagas neste mês`;
+  if (atrasadas > 0 && !completo) statusTxt += ` · ${atrasadas} atrasada${atrasadas > 1 ? 's' : ''}`;
   el.innerHTML = `<div class="fixas-card" onclick="abrirFixas()">
     <div class="fixas-head">
       <div>
-        <div class="fixas-total">${fmtBRL(totalPago)} <span style="color:var(--muted);font-weight:500;font-size:14px;">/ ${fmtBRL(totalPrevisto)}</span></div>
-        <div class="fixas-status">${pagas} de ${ativas.length} pagas neste mês</div>
+        <div class="fixas-total">${fmtBRL(totalPago)} <span class="ft-sep">/ ${fmtBRL(totalPrevisto)}</span></div>
+        <div class="fixas-status">${esc(statusTxt)}</div>
       </div>
-      <div style="color:var(--accent);font-size:20px;">›</div>
+      <svg class="ic" style="color:var(--tint);"><use href="#i-chevron-right"/></svg>
     </div>
-    <div class="fixas-bar"><div class="fixas-bar-fill ${completo ? 'full' : ''}" style="width:${pct}%;"></div></div>
+    <div class="fixas-bar"><div class="fixas-bar-fill ${barClass}" style="width:${pct}%;"></div></div>
   </div>`;
 }
 
+/* =====================================================================
+   VIEW: LANÇAMENTOS
+   ===================================================================== */
 function renderLancamentos() {
   const lista = [...DB.lancamentos]
     .filter(l => mesPertence(l.data, currentMes))
     .filter(l => currentLancFilter === 'todos' || l.tipo === currentLancFilter)
-    .sort((a,b) => (b.data + b.id).localeCompare(a.data + a.id));
+    .filter(l => matchSearch(l, currentLancSearch))
+    .sort(ordenaLancs);
+
+  // Resumo do filtro
+  const sumEl = document.getElementById('lanc-summary');
+  if (lista.length > 0) {
+    const total = lista.reduce((s, l) => s + (l.tipo === 'receita' ? l.valor : -l.valor), 0);
+    const totalAbs = lista.reduce((s, l) => s + l.valor, 0);
+    const lbl = currentLancFilter === 'todos' ? `${lista.length} lançamento${lista.length > 1 ? 's' : ''}` :
+                lista.length + ' ' + ({receita:'receitas',despesa:'despesas',transferencia:'transferências',investimento:'investimentos'}[currentLancFilter] || '');
+    const valorTxt = (currentLancFilter === 'todos')
+      ? `${total >= 0 ? '+' : '−'} ${fmtBRL(Math.abs(total))}`
+      : fmtBRL(totalAbs);
+    const cls = (currentLancFilter === 'todos' ? (total >= 0 ? 'pos' : 'neg') :
+                  (currentLancFilter === 'despesa' ? 'neg' : (currentLancFilter === 'receita' ? 'pos' : 'neutral')));
+    sumEl.innerHTML = `
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;">
+        <span class="muted-text">${esc(lbl)}</span>
+        <span class="li-valor ${cls}" style="font-size:16px;">${esc(valorTxt)}</span>
+      </div>`;
+  } else {
+    sumEl.innerHTML = '';
+  }
+
   const el = document.getElementById('lancamentos-lista');
   if (!lista.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">◌</div><div class="empty-msg">Nenhum lançamento</div></div>';
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon"><svg class="ic"><use href="#i-receipt"/></svg></div>
+        <div class="empty-title">Nenhum lançamento</div>
+        <div class="empty-msg">${currentLancSearch ? 'Nada bate com a busca neste mês.' : 'Toque no <strong>+</strong> para criar o primeiro.'}</div>
+      </div>`;
     return;
   }
   el.innerHTML = '<div class="list">' + lista.map(lancItemHTML).join('') + '</div>';
 }
 
-function renderContas() {
-  const el = document.getElementById('contas-lista');
-  if (!DB.contas.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">▢</div><div class="empty-msg">Crie sua primeira conta para começar</div></div>';
-    return;
-  }
-  el.innerHTML = '<div class="list">' + DB.contas.map(c => `
-    <div class="list-item" onclick="abrirConta('${esc(c.id)}')">
-      <div class="li-icon" style="background:${esc(c.cor)};">${esc(c.nome.charAt(0).toUpperCase())}</div>
-      <div class="li-body">
-        <div class="li-title">${esc(c.nome)}</div>
-        <div class="li-sub">${esc(c.tipo || '')}</div>
-      </div>
-      <div class="li-right"><div class="li-valor neutral">${fmtBRL(saldoConta(c.id))}</div></div>
-    </div>
-  `).join('') + '</div>';
+function matchSearch(l, q) {
+  if (!q) return true;
+  const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const needle = norm(q);
+  if (norm(l.descricao).includes(needle)) return true;
+  if (norm(DB.categorias.find(c => c.id === l.categoriaId)?.nome).includes(needle)) return true;
+  if (norm(DB.contas.find(c => c.id === l.contaId)?.nome).includes(needle)) return true;
+  if (norm(DB.contas.find(c => c.id === l.contaOrigemId)?.nome).includes(needle)) return true;
+  if (norm(DB.contas.find(c => c.id === l.contaDestinoId)?.nome).includes(needle)) return true;
+  if (norm(DB.bens.find(b => b.id === l.bemId)?.nome).includes(needle)) return true;
+  return false;
 }
 
-function renderBens() {
-  const el = document.getElementById('bens-lista');
-  if (!DB.bens.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">◇</div><div class="empty-msg">Cadastre um bem (casa, terreno, poupança) para acompanhá-lo</div></div>';
+/* =====================================================================
+   VIEW: CONTAS
+   ===================================================================== */
+function renderContas() {
+  const totalAtual = DB.contas.reduce((s, c) => s + saldoConta(c.id), 0);
+  document.getElementById('contas-resumo').innerHTML = `
+    <div class="patrimonio-label" style="margin:0;">Saldo total em contas</div>
+    <div class="patrimonio-valor" style="font-size:28px;margin-top:2px;">${fmtBRL(totalAtual)}</div>
+    <div class="muted-text" style="margin-top:4px;font-size:12px;">${DB.contas.length} ${DB.contas.length === 1 ? 'conta' : 'contas'}</div>
+  `;
+  const el = document.getElementById('contas-lista');
+  if (!DB.contas.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon"><svg class="ic"><use href="#i-wallet"/></svg></div>
+        <div class="empty-title">Sem contas cadastradas</div>
+        <div class="empty-msg">Crie sua primeira conta (corrente, cartão, poupança…) para começar.</div>
+      </div>`;
     return;
   }
-  el.innerHTML = '<div class="list">' + DB.bens.map(b => {
-    const valor = valorBem(b.id);
-    const inv = totalInvestidoBem(b.id);
-    const gastos = gastosBem(b.id);
-    let extra = '';
-    if (inv > 0) extra += ` · invest: ${fmtBRL(inv)}`;
-    if (gastos > 0) extra += ` · gastos: ${fmtBRL(gastos)}`;
+  const ordenado = [...DB.contas].sort((a, b) => saldoConta(b.id) - saldoConta(a.id));
+  el.innerHTML = '<div class="list">' + ordenado.map(c => {
+    const s = saldoConta(c.id);
     return `
-      <div class="list-item" onclick="abrirBemDetalhe('${esc(b.id)}')">
-        <div class="li-icon" style="background:${esc(b.cor)};">${esc(b.nome.charAt(0).toUpperCase())}</div>
+      <div class="list-item tappable" onclick="abrirContaDetalhe('${esc(c.id)}')">
+        <div class="li-icon" style="background:${esc(c.cor || '#8e8e93')};">${esc((c.nome[0] || '?').toUpperCase())}</div>
         <div class="li-body">
-          <div class="li-title">${esc(b.nome)}</div>
-          <div class="li-sub">${esc((b.tipo || '') + extra)}</div>
+          <div class="li-title">${esc(c.nome)}</div>
+          <div class="li-sub">${esc(c.tipo || '—')}</div>
         </div>
-        <div class="li-right"><div class="li-valor neutral">${fmtBRL(valor)}</div></div>
+        <div class="li-right">
+          <div class="li-valor ${s < 0 ? 'neg' : 'neutral'}">${fmtBRL(s)}</div>
+        </div>
+        <div class="li-chevron"><svg class="ic"><use href="#i-chevron-right"/></svg></div>
       </div>`;
   }).join('') + '</div>';
 }
 
-/* ============================================================
+/* =====================================================================
+   VIEW: BENS
+   ===================================================================== */
+function renderBens() {
+  const totalAtual = DB.bens.reduce((s, b) => s + valorBem(b.id), 0);
+  document.getElementById('bens-resumo').innerHTML = `
+    <div class="patrimonio-label" style="margin:0;">Valor total em bens</div>
+    <div class="patrimonio-valor" style="font-size:28px;margin-top:2px;">${fmtBRL(totalAtual)}</div>
+    <div class="muted-text" style="margin-top:4px;font-size:12px;">${DB.bens.length} ${DB.bens.length === 1 ? 'bem' : 'bens'}</div>
+  `;
+  const el = document.getElementById('bens-lista');
+  if (!DB.bens.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon"><svg class="ic"><use href="#i-gem"/></svg></div>
+        <div class="empty-title">Sem bens cadastrados</div>
+        <div class="empty-msg">Cadastre um bem (casa, terreno, reserva) para acompanhá-lo no patrimônio.</div>
+      </div>`;
+    return;
+  }
+  const ordenado = [...DB.bens].sort((a, b) => valorBem(b.id) - valorBem(a.id));
+  el.innerHTML = '<div class="list">' + ordenado.map(b => {
+    const valor = valorBem(b.id);
+    const inv = totalInvestidoBem(b.id);
+    const gastos = gastosBem(b.id);
+    const subBits = [b.tipo].filter(Boolean);
+    if (inv > 0) subBits.push(`invest ${fmtBRL(inv)}`);
+    if (gastos > 0) subBits.push(`gastos ${fmtBRL(gastos)}`);
+    return `
+      <div class="list-item tappable" onclick="abrirBemDetalhe('${esc(b.id)}')">
+        <div class="li-icon sq" style="background:${esc(b.cor || '#8e8e93')};">${esc((b.nome[0] || '?').toUpperCase())}</div>
+        <div class="li-body">
+          <div class="li-title">${esc(b.nome)}</div>
+          <div class="li-sub">${esc(subBits.join(' · '))}</div>
+        </div>
+        <div class="li-right"><div class="li-valor neutral">${fmtBRL(valor)}</div></div>
+        <div class="li-chevron"><svg class="ic"><use href="#i-chevron-right"/></svg></div>
+      </div>`;
+  }).join('') + '</div>';
+}
+
+/* =====================================================================
    NAVEGAÇÃO
-   ============================================================ */
+   ===================================================================== */
 function setView(view) {
   currentView = view;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1468,42 +2460,63 @@ function setView(view) {
   document.querySelectorAll('.nav-item[data-view]').forEach(n => {
     n.classList.toggle('active', n.dataset.view === view);
   });
+  window.scrollTo({ top: 0, behavior: 'instant' });
   render();
 }
 
-/* ============================================================
-   MODAIS — abrir / fechar
-   ============================================================ */
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
+/* =====================================================================
+   MODAIS — open/close
+   ===================================================================== */
+function openModal(id) {
+  const el = document.getElementById(id);
+  el.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('open');
+  // Se nenhum modal aberto, restaura scroll
+  if (!document.querySelector('.modal-backdrop.open')) {
+    document.body.style.overflow = '';
+  }
+}
 document.querySelectorAll('[data-close]').forEach(btn => {
   btn.addEventListener('click', () => closeModal(btn.dataset.close));
 });
 document.querySelectorAll('.modal-backdrop').forEach(b => {
-  b.addEventListener('click', e => { if (e.target === b) b.classList.remove('open'); });
+  b.addEventListener('click', e => { if (e.target === b) closeModal(b.id); });
+});
+// Escape fecha modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const open = [...document.querySelectorAll('.modal-backdrop.open')].pop();
+    if (open) closeModal(open.id);
+    const conf = document.getElementById('confirm-backdrop');
+    if (conf.classList.contains('open')) document.getElementById('confirm-cancel').click();
+  }
 });
 
-/* ============================================================
+/* =====================================================================
    COLOR PICKER
-   ============================================================ */
+   ===================================================================== */
 function renderColorPicker(elId, selected, onSelect) {
   const el = document.getElementById(elId);
   el.innerHTML = CORES.map(c =>
-    `<div class="color-dot ${c === selected ? 'selected':''}" style="background:${c};" data-cor="${c}"></div>`
+    `<div class="color-dot ${c === selected ? 'selected' : ''}" style="background:${c};" data-cor="${c}"></div>`
   ).join('');
   el.querySelectorAll('.color-dot').forEach(d => {
     d.addEventListener('click', () => {
       el.querySelectorAll('.color-dot').forEach(x => x.classList.remove('selected'));
       d.classList.add('selected');
       onSelect(d.dataset.cor);
+      vibrate(4);
     });
   });
 }
 
-/* ============================================================
-   LANÇAMENTO
-   ============================================================ */
+/* =====================================================================
+   LANÇAMENTO — modal
+   ===================================================================== */
 function abrirLancamentoNovo() {
   if (!DB.contas.length) {
     toast('Crie uma conta primeiro');
@@ -1512,14 +2525,17 @@ function abrirLancamentoNovo() {
   }
   editingLancId = null;
   currentTipoLanc = 'receita';
-  document.getElementById('l-valor').value = '';
+  const valInp = document.getElementById('l-valor');
+  applyCurrencyMask(valInp);
+  valInp.setMaskedValue(0);
   document.getElementById('l-descricao').value = '';
   document.getElementById('l-data').value = hoje();
   document.getElementById('l-excluir').style.display = 'none';
-  document.querySelector('#modal-lancar .modal-title').textContent = 'Novo lançamento';
+  document.getElementById('l-duplicar').style.display = 'none';
+  document.getElementById('lanc-modal-title').textContent = 'Novo lançamento';
   setTipoLanc('receita');
   openModal('modal-lancar');
-  setTimeout(() => document.getElementById('l-valor').focus(), 100);
+  setTimeout(() => valInp.focus(), 250);
 }
 
 function abrirLancamento(id) {
@@ -1527,11 +2543,14 @@ function abrirLancamento(id) {
   if (!l) return;
   editingLancId = id;
   currentTipoLanc = l.tipo;
-  document.getElementById('l-valor').value = l.valor.toString().replace('.', ',');
+  const valInp = document.getElementById('l-valor');
+  applyCurrencyMask(valInp);
+  valInp.setMaskedValue(l.valor);
   document.getElementById('l-descricao').value = l.descricao || '';
   document.getElementById('l-data').value = l.data;
   document.getElementById('l-excluir').style.display = 'block';
-  document.querySelector('#modal-lancar .modal-title').textContent = 'Editar lançamento';
+  document.getElementById('l-duplicar').style.display = 'block';
+  document.getElementById('lanc-modal-title').textContent = 'Editar lançamento';
   setTipoLanc(l.tipo);
   if (l.tipo === 'receita' || l.tipo === 'despesa') {
     document.getElementById('l-conta').value = l.contaId || '';
@@ -1558,7 +2577,6 @@ function setTipoLanc(tipo) {
   show('sec-destino', tipo === 'transferencia');
   show('sec-bem', tipo === 'investimento');
 
-  // Popula selects
   const contaOpts = DB.contas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)} — ${fmtBRL(saldoConta(c.id))}</option>`).join('');
   document.getElementById('l-conta').innerHTML = contaOpts;
   document.getElementById('l-origem').innerHTML = contaOpts;
@@ -1578,43 +2596,48 @@ function setTipoLanc(tipo) {
 }
 
 document.querySelectorAll('.tipo-tab').forEach(t => {
-  t.addEventListener('click', () => setTipoLanc(t.dataset.tipo));
+  t.addEventListener('click', () => { vibrate(4); setTipoLanc(t.dataset.tipo); });
 });
 
-document.getElementById('l-salvar').addEventListener('click', () => {
-  const valor = parseValor(document.getElementById('l-valor').value);
-  if (valor <= 0) { toast('Informe um valor'); return; }
+function coletaLancamento() {
+  const valInp = document.getElementById('l-valor');
+  const valor = valInp.getMaskedNumber ? valInp.getMaskedNumber() : parseValor(valInp.value);
+  if (valor <= 0) { toast('Informe um valor', 'err'); return null; }
   const data = document.getElementById('l-data').value || hoje();
   const descricao = document.getElementById('l-descricao').value.trim();
-
   const l = {
     id: editingLancId || uid(),
     tipo: currentTipoLanc,
-    valor,
-    data,
-    descricao,
+    valor, data, descricao,
     criadoEm: editingLancId ? (DB.lancamentos.find(x => x.id === editingLancId)?.criadoEm || Date.now()) : Date.now()
   };
-
   if (currentTipoLanc === 'receita' || currentTipoLanc === 'despesa') {
     l.contaId = document.getElementById('l-conta').value;
     l.categoriaId = document.getElementById('l-categoria').value || null;
-    if (!l.contaId) { toast('Selecione uma conta'); return; }
-    if (currentTipoLanc === 'despesa') {
-      l.bemId = document.getElementById('l-bem-link').value || null;
-    }
+    if (!l.contaId) { toast('Selecione uma conta', 'err'); return null; }
+    if (currentTipoLanc === 'despesa') l.bemId = document.getElementById('l-bem-link').value || null;
   } else if (currentTipoLanc === 'transferencia') {
     l.contaOrigemId = document.getElementById('l-origem').value;
     l.contaDestinoId = document.getElementById('l-destino').value;
-    if (!l.contaOrigemId || !l.contaDestinoId) { toast('Selecione as contas'); return; }
-    if (l.contaOrigemId === l.contaDestinoId) { toast('Origem e destino diferentes'); return; }
+    if (!l.contaOrigemId || !l.contaDestinoId) { toast('Selecione as contas', 'err'); return null; }
+    if (l.contaOrigemId === l.contaDestinoId) { toast('Origem e destino diferentes', 'err'); return null; }
   } else if (currentTipoLanc === 'investimento') {
     l.contaOrigemId = document.getElementById('l-origem').value;
     l.bemId = document.getElementById('l-bem').value;
-    if (!l.contaOrigemId) { toast('Selecione a conta de origem'); return; }
-    if (!l.bemId) { toast('Selecione um bem (ou cadastre)'); return; }
+    if (!l.contaOrigemId) { toast('Selecione a conta de origem', 'err'); return null; }
+    if (!l.bemId) { toast('Selecione um bem (ou cadastre)', 'err'); return null; }
   }
+  // Preserva recorrenciaId em edição
+  if (editingLancId) {
+    const old = DB.lancamentos.find(x => x.id === editingLancId);
+    if (old?.recorrenciaId) l.recorrenciaId = old.recorrenciaId;
+  }
+  return l;
+}
 
+document.getElementById('l-salvar').addEventListener('click', () => {
+  const l = coletaLancamento();
+  if (!l) return;
   if (editingLancId) {
     const i = DB.lancamentos.findIndex(x => x.id === editingLancId);
     DB.lancamentos[i] = l;
@@ -1625,11 +2648,31 @@ document.getElementById('l-salvar').addEventListener('click', () => {
   closeModal('modal-lancar');
   render();
   toast(editingLancId ? 'Atualizado' : 'Lançado');
+  vibrate(10);
 });
 
-document.getElementById('l-excluir').addEventListener('click', () => {
+document.getElementById('l-duplicar').addEventListener('click', () => {
+  const l = coletaLancamento();
+  if (!l) return;
+  // Cria novo, mantendo o existente
+  l.id = uid();
+  l.criadoEm = Date.now();
+  delete l.recorrenciaId;
+  DB.lancamentos.push(l);
+  saveDB();
+  closeModal('modal-lancar');
+  render();
+  toast('Duplicado');
+});
+
+document.getElementById('l-excluir').addEventListener('click', async () => {
   if (!editingLancId) return;
-  if (!confirm('Excluir este lançamento?')) return;
+  const ok = await confirmDialog({
+    title: 'Excluir lançamento?',
+    msg: 'Esta ação não pode ser desfeita.',
+    okText: 'Excluir', danger: true
+  });
+  if (!ok) return;
   DB.lancamentos = DB.lancamentos.filter(l => l.id !== editingLancId);
   saveDB();
   closeModal('modal-lancar');
@@ -1637,16 +2680,19 @@ document.getElementById('l-excluir').addEventListener('click', () => {
   toast('Excluído');
 });
 
-/* ============================================================
-   CONTAS
-   ============================================================ */
+/* =====================================================================
+   CONTA — modal cadastro
+   ===================================================================== */
 function abrirContaNova() {
   editingContaId = null;
   document.getElementById('conta-modal-title').textContent = 'Nova conta';
   document.getElementById('c-nome').value = '';
   document.getElementById('c-tipo').value = '';
-  document.getElementById('c-saldo').value = '';
+  const cs = document.getElementById('c-saldo');
+  applyCurrencyMask(cs);
+  cs.setMaskedValue(0);
   document.getElementById('c-excluir').style.display = 'none';
+  document.getElementById('c-ver-extrato').style.display = 'none';
   selectedCorConta = CORES[Math.floor(Math.random() * CORES.length)];
   renderColorPicker('c-cores', selectedCorConta, c => selectedCorConta = c);
   openModal('modal-conta');
@@ -1659,18 +2705,22 @@ function abrirConta(id) {
   document.getElementById('conta-modal-title').textContent = 'Editar conta';
   document.getElementById('c-nome').value = c.nome;
   document.getElementById('c-tipo').value = c.tipo || '';
-  document.getElementById('c-saldo').value = (c.saldoInicial || 0).toString().replace('.', ',');
+  const cs = document.getElementById('c-saldo');
+  applyCurrencyMask(cs);
+  cs.setMaskedValue(c.saldoInicial || 0);
   document.getElementById('c-excluir').style.display = 'block';
-  selectedCorConta = c.cor;
+  document.getElementById('c-ver-extrato').style.display = 'block';
+  selectedCorConta = c.cor || CORES[0];
   renderColorPicker('c-cores', selectedCorConta, x => selectedCorConta = x);
   openModal('modal-conta');
 }
 
 document.getElementById('c-salvar').addEventListener('click', () => {
   const nome = document.getElementById('c-nome').value.trim();
-  if (!nome) { toast('Informe um nome'); return; }
+  if (!nome) { toast('Informe um nome', 'err'); return; }
   const tipo = document.getElementById('c-tipo').value.trim();
-  const saldoInicial = parseValor(document.getElementById('c-saldo').value);
+  const cs = document.getElementById('c-saldo');
+  const saldoInicial = cs.getMaskedNumber ? cs.getMaskedNumber() : parseValor(cs.value);
   if (editingContaId) {
     const c = DB.contas.find(x => x.id === editingContaId);
     Object.assign(c, { nome, tipo, saldoInicial, cor: selectedCorConta });
@@ -1683,28 +2733,76 @@ document.getElementById('c-salvar').addEventListener('click', () => {
   toast('Salvo');
 });
 
-document.getElementById('c-excluir').addEventListener('click', () => {
+document.getElementById('c-ver-extrato').addEventListener('click', () => {
+  if (!editingContaId) return;
+  const id = editingContaId;
+  closeModal('modal-conta');
+  abrirContaDetalhe(id);
+});
+
+document.getElementById('c-excluir').addEventListener('click', async () => {
   if (!editingContaId) return;
   const usado = DB.lancamentos.some(l =>
     l.contaId === editingContaId || l.contaOrigemId === editingContaId || l.contaDestinoId === editingContaId
   );
-  if (usado) { toast('Conta usada em lançamentos. Exclua-os antes.'); return; }
-  if (!confirm('Excluir esta conta?')) return;
+  if (usado) {
+    toast('Conta usada em lançamentos. Exclua-os antes.', 'err');
+    return;
+  }
+  const ok = await confirmDialog({
+    title: 'Excluir conta?',
+    msg: 'A conta será removida permanentemente.',
+    okText: 'Excluir', danger: true
+  });
+  if (!ok) return;
   DB.contas = DB.contas.filter(c => c.id !== editingContaId);
   saveDB();
   closeModal('modal-conta');
   render();
+  toast('Conta excluída');
 });
 
-/* ============================================================
-   BENS
-   ============================================================ */
+/* =====================================================================
+   CONTA — Detalhe (extrato)
+   ===================================================================== */
+function abrirContaDetalhe(id) {
+  const c = DB.contas.find(x => x.id === id);
+  if (!c) return;
+  viewingContaId = id;
+  document.getElementById('cd-title').textContent = c.nome;
+  const s = saldoConta(id);
+  document.getElementById('cd-saldo').textContent = fmtBRL(s);
+  const m = movsContaMes(id, currentMes);
+  const sMes = document.getElementById('cd-saldo-mes');
+  sMes.textContent = (m.saldoMes >= 0 ? '+ ' : '− ') + fmtBRL(Math.abs(m.saldoMes));
+  sMes.style.color = m.saldoMes >= 0 ? 'var(--receita)' : 'var(--despesa)';
+  document.getElementById('cd-entradas').textContent = fmtBRL(m.entradas);
+  document.getElementById('cd-saidas').textContent = fmtBRL(m.saidas);
+
+  const hist = lancamentosDaConta(id, currentMes).sort(ordenaLancs);
+  document.getElementById('cd-historico').innerHTML = hist.length
+    ? '<div class="list">' + hist.map(lancItemHTML).join('') + '</div>'
+    : '<div class="card muted center" style="font-size:13px;">Sem movimentações neste mês</div>';
+  openModal('modal-conta-detalhe');
+}
+
+document.getElementById('cd-editar').addEventListener('click', () => {
+  const id = viewingContaId;
+  closeModal('modal-conta-detalhe');
+  if (id) abrirConta(id);
+});
+
+/* =====================================================================
+   BEM — modal cadastro
+   ===================================================================== */
 function abrirBemNovo() {
   editingBemId = null;
   document.getElementById('bem-modal-title').textContent = 'Novo bem';
   document.getElementById('b-nome').value = '';
   document.getElementById('b-tipo').value = '';
-  document.getElementById('b-valor').value = '';
+  const bv = document.getElementById('b-valor');
+  applyCurrencyMask(bv);
+  bv.setMaskedValue(0);
   document.getElementById('b-excluir').style.display = 'none';
   selectedCorBem = CORES[Math.floor(Math.random() * CORES.length)];
   renderColorPicker('b-cores', selectedCorBem, c => selectedCorBem = c);
@@ -1718,18 +2816,21 @@ function abrirBem(id) {
   document.getElementById('bem-modal-title').textContent = 'Editar bem';
   document.getElementById('b-nome').value = b.nome;
   document.getElementById('b-tipo').value = b.tipo || '';
-  document.getElementById('b-valor').value = (b.valorInicial || 0).toString().replace('.', ',');
+  const bv = document.getElementById('b-valor');
+  applyCurrencyMask(bv);
+  bv.setMaskedValue(b.valorInicial || 0);
   document.getElementById('b-excluir').style.display = 'block';
-  selectedCorBem = b.cor;
+  selectedCorBem = b.cor || CORES[2];
   renderColorPicker('b-cores', selectedCorBem, c => selectedCorBem = c);
   openModal('modal-bem');
 }
 
 document.getElementById('b-salvar').addEventListener('click', () => {
   const nome = document.getElementById('b-nome').value.trim();
-  if (!nome) { toast('Informe um nome'); return; }
+  if (!nome) { toast('Informe um nome', 'err'); return; }
   const tipo = document.getElementById('b-tipo').value.trim();
-  const valorInicial = parseValor(document.getElementById('b-valor').value);
+  const bv = document.getElementById('b-valor');
+  const valorInicial = bv.getMaskedNumber ? bv.getMaskedNumber() : parseValor(bv.value);
   if (editingBemId) {
     const b = DB.bens.find(x => x.id === editingBemId);
     Object.assign(b, { nome, tipo, valorInicial, cor: selectedCorBem });
@@ -1742,11 +2843,18 @@ document.getElementById('b-salvar').addEventListener('click', () => {
   toast('Salvo');
 });
 
-document.getElementById('b-excluir').addEventListener('click', () => {
+document.getElementById('b-excluir').addEventListener('click', async () => {
   if (!editingBemId) return;
   const usado = DB.lancamentos.some(l => l.bemId === editingBemId);
-  if (usado) { toast('Bem vinculado a lançamentos. Exclua-os antes.'); return; }
-  if (!confirm('Excluir este bem?')) return;
+  if (usado) { toast('Bem vinculado a lançamentos. Exclua-os antes.', 'err'); return; }
+  const usadoRec = DB.recorrencias.some(r => r.bemId === editingBemId);
+  if (usadoRec) { toast('Bem vinculado a despesas fixas. Desvincule antes.', 'err'); return; }
+  const ok = await confirmDialog({
+    title: 'Excluir bem?',
+    msg: 'O bem será removido permanentemente.',
+    okText: 'Excluir', danger: true
+  });
+  if (!ok) return;
   DB.bens = DB.bens.filter(b => b.id !== editingBemId);
   saveDB();
   closeModal('modal-bem');
@@ -1765,10 +2873,10 @@ function abrirBemDetalhe(id) {
   document.getElementById('bd-gastos-total').textContent = fmtBRL(gastosBem(id));
   const hist = DB.lancamentos
     .filter(l => l.bemId === id && (l.tipo === 'investimento' || l.tipo === 'despesa'))
-    .sort((a,b) => (b.data + b.id).localeCompare(a.data + a.id));
+    .sort(ordenaLancs);
   document.getElementById('bd-historico').innerHTML = hist.length
     ? '<div class="list">' + hist.map(lancItemHTML).join('') + '</div>'
-    : '<div class="card" style="text-align:center;color:var(--muted);font-size:13px;">Sem histórico</div>';
+    : '<div class="card muted center" style="font-size:13px;">Sem histórico</div>';
   openModal('modal-bem-detalhe');
 }
 
@@ -1777,9 +2885,9 @@ document.getElementById('bd-editar').addEventListener('click', () => {
   abrirBem(editingBemId);
 });
 
-/* ============================================================
-   RECORRÊNCIAS / DESPESAS FIXAS
-   ============================================================ */
+/* =====================================================================
+   RECORRÊNCIAS / FIXAS
+   ===================================================================== */
 function abrirFixas() {
   renderListaFixas();
   openModal('modal-fixas');
@@ -1789,35 +2897,44 @@ function renderListaFixas() {
   document.getElementById('fixas-mes-info').textContent = nomeMes(currentMes);
   const el = document.getElementById('fixas-lista');
   if (!DB.recorrencias.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">↻</div><div class="empty-msg">Nenhuma despesa fixa cadastrada</div></div>';
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon"><svg class="ic"><use href="#i-repeat"/></svg></div>
+        <div class="empty-title">Nenhuma despesa fixa</div>
+        <div class="empty-msg">Cadastre suas contas recorrentes (aluguel, internet…) para acompanhar todo mês.</div>
+      </div>`;
     return;
   }
-  const items = [...DB.recorrencias].sort((a,b) => {
+  const hojeStr = hoje();
+  const isMesAtual = currentMes === mesIso();
+  const items = [...DB.recorrencias].sort((a, b) => {
     if (a.ativa !== b.ativa) return a.ativa ? -1 : 1;
     return (a.diaVencimento || 0) - (b.diaVencimento || 0);
   });
   el.innerHTML = '<div class="list">' + items.map(r => {
     const lanc = recorrenciaPaga(r.id, currentMes);
-    const status = !r.ativa ? 'inativa' : (lanc ? 'paga' : 'pendente');
-    const statusIcon = !r.ativa ? '–' : (lanc ? '✓' : String(r.diaVencimento || '?'));
+    let status = !r.ativa ? 'inativa' : (lanc ? 'paga' : 'pendente');
+    if (!lanc && r.ativa && isMesAtual && diaSeguroNoMes(currentMes, r.diaVencimento) < hojeStr) status = 'atrasada';
+    let statusIcon;
+    if (status === 'paga') statusIcon = `<svg class="ic"><use href="#i-check"/></svg>`;
+    else if (status === 'inativa') statusIcon = '–';
+    else statusIcon = String(r.diaVencimento || '?');
     const cat = DB.categorias.find(c => c.id === r.categoriaId);
     const conta = DB.contas.find(c => c.id === r.contaId);
-    const sub = [
-      `dia ${r.diaVencimento || '?'}`,
-      cat?.nome,
-      conta?.nome
-    ].filter(Boolean).join(' · ');
+    const sub = [`vence dia ${r.diaVencimento || '?'}`, cat?.nome, conta?.nome].filter(Boolean).join(' · ');
     const valorMostrado = lanc ? lanc.valor : r.valor;
+    const dateLabel = lanc ? 'paga ' + fmtDataCurta(lanc.data) :
+                      (r.ativa ? (status === 'atrasada' ? 'atrasada' : 'pendente') : 'inativa');
     return `
       <div class="recorr-item" onclick="acaoRecorrencia('${esc(r.id)}')">
         <div class="recorr-status ${status}">${statusIcon}</div>
         <div class="li-body">
-          <div class="li-title">${esc(r.nome)}</div>
+          <div class="li-title">${esc(r.nome)}${status === 'atrasada' ? '<span class="badge late">atrasada</span>' : ''}</div>
           <div class="li-sub">${esc(sub)}</div>
         </div>
         <div class="li-right">
           <div class="li-valor ${lanc ? 'neg' : 'neutral'}" style="${lanc ? '' : 'color:var(--muted);font-weight:500;'}">${fmtBRL(valorMostrado)}</div>
-          <div class="li-date">${lanc ? 'paga ' + esc(fmtData(lanc.data)) : (r.ativa ? 'pendente' : 'inativa')}</div>
+          <div class="li-date">${esc(dateLabel)}</div>
         </div>
       </div>`;
   }).join('') + '</div>';
@@ -1838,11 +2955,13 @@ function acaoRecorrencia(rId) {
 }
 
 function abrirRecorrenciaNova() {
-  if (!DB.contas.length) { toast('Crie uma conta primeiro'); return; }
+  if (!DB.contas.length) { toast('Crie uma conta primeiro', 'err'); return; }
   editingRecorrenciaId = null;
   document.getElementById('recorr-modal-title').textContent = 'Nova despesa fixa';
   document.getElementById('r-nome').value = '';
-  document.getElementById('r-valor').value = '';
+  const rv = document.getElementById('r-valor');
+  applyCurrencyMask(rv);
+  rv.setMaskedValue(0);
   document.getElementById('r-dia').value = '';
   document.getElementById('r-excluir').style.display = 'none';
   document.getElementById('r-ativa').classList.add('on');
@@ -1856,7 +2975,9 @@ function abrirRecorrencia(rId) {
   editingRecorrenciaId = rId;
   document.getElementById('recorr-modal-title').textContent = 'Editar despesa fixa';
   document.getElementById('r-nome').value = r.nome || '';
-  document.getElementById('r-valor').value = (r.valor || 0).toString().replace('.', ',');
+  const rv = document.getElementById('r-valor');
+  applyCurrencyMask(rv);
+  rv.setMaskedValue(r.valor || 0);
   document.getElementById('r-dia').value = r.diaVencimento || '';
   document.getElementById('r-excluir').style.display = 'block';
   document.getElementById('r-ativa').classList.toggle('on', !!r.ativa);
@@ -1880,15 +3001,17 @@ function popularSelectsRecorrencia() {
 
 document.getElementById('r-ativa').addEventListener('click', () => {
   document.getElementById('r-ativa').classList.toggle('on');
+  vibrate(4);
 });
 
 document.getElementById('r-salvar').addEventListener('click', () => {
   const nome = document.getElementById('r-nome').value.trim();
-  if (!nome) { toast('Informe a descrição'); return; }
-  const valor = parseValor(document.getElementById('r-valor').value);
-  const dia = parseInt(document.getElementById('r-dia').value, 10) || 1;
+  if (!nome) { toast('Informe a descrição', 'err'); return; }
+  const rv = document.getElementById('r-valor');
+  const valor = rv.getMaskedNumber ? rv.getMaskedNumber() : parseValor(rv.value);
+  const dia = Math.min(31, Math.max(1, parseInt(document.getElementById('r-dia').value, 10) || 1));
   const contaId = document.getElementById('r-conta').value;
-  if (!contaId) { toast('Selecione uma conta'); return; }
+  if (!contaId) { toast('Selecione uma conta', 'err'); return; }
   const categoriaId = document.getElementById('r-categoria').value || null;
   const bemId = document.getElementById('r-bem').value || null;
   const ativa = document.getElementById('r-ativa').classList.contains('on');
@@ -1908,15 +3031,16 @@ document.getElementById('r-salvar').addEventListener('click', () => {
   toast('Salvo');
 });
 
-document.getElementById('r-excluir').addEventListener('click', () => {
+document.getElementById('r-excluir').addEventListener('click', async () => {
   if (!editingRecorrenciaId) return;
   const temLanc = DB.lancamentos.some(l => l.recorrenciaId === editingRecorrenciaId);
-  const msg = temLanc
-    ? 'Existem lançamentos vinculados a esta despesa fixa. Excluir só a recorrência (lançamentos ficam)?'
-    : 'Excluir esta despesa fixa?';
-  if (!confirm(msg)) return;
+  const ok = await confirmDialog({
+    title: 'Excluir despesa fixa?',
+    msg: temLanc ? 'Os pagamentos já registrados serão mantidos, apenas a recorrência será removida.' : 'Esta ação não pode ser desfeita.',
+    okText: 'Excluir', danger: true
+  });
+  if (!ok) return;
   DB.recorrencias = DB.recorrencias.filter(r => r.id !== editingRecorrenciaId);
-  // Mantém lançamentos mas desvincula
   if (temLanc) {
     for (const l of DB.lancamentos) {
       if (l.recorrenciaId === editingRecorrenciaId) delete l.recorrenciaId;
@@ -1933,7 +3057,9 @@ function abrirPagar(rId) {
   if (!r) return;
   pagandoRecorrenciaId = rId;
   document.getElementById('p-desc').value = r.nome;
-  document.getElementById('p-valor').value = (r.valor || 0).toString().replace('.', ',');
+  const pv = document.getElementById('p-valor');
+  applyCurrencyMask(pv);
+  pv.setMaskedValue(r.valor || 0);
   document.getElementById('p-data').value = diaSeguroNoMes(currentMes, r.diaVencimento);
   const contaOpts = DB.contas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)} — ${fmtBRL(saldoConta(c.id))}</option>`).join('');
   document.getElementById('p-conta').innerHTML = contaOpts;
@@ -1945,18 +3071,23 @@ document.getElementById('p-confirmar').addEventListener('click', () => {
   if (!pagandoRecorrenciaId) return;
   const r = DB.recorrencias.find(x => x.id === pagandoRecorrenciaId);
   if (!r) return;
-  const valor = parseValor(document.getElementById('p-valor').value);
-  if (valor <= 0) { toast('Informe um valor'); return; }
+  // Já paga neste mês? evita duplicar
+  const existe = recorrenciaPaga(r.id, currentMes);
+  if (existe) {
+    toast('Já paga neste mês', 'err');
+    closeModal('modal-pagar');
+    renderListaFixas();
+    return;
+  }
+  const pv = document.getElementById('p-valor');
+  const valor = pv.getMaskedNumber ? pv.getMaskedNumber() : parseValor(pv.value);
+  if (valor <= 0) { toast('Informe um valor', 'err'); return; }
   const data = document.getElementById('p-data').value || hoje();
   const contaId = document.getElementById('p-conta').value;
-  if (!contaId) { toast('Selecione uma conta'); return; }
+  if (!contaId) { toast('Selecione uma conta', 'err'); return; }
   DB.lancamentos.push({
-    id: uid(),
-    tipo: 'despesa',
-    valor,
-    data,
-    descricao: r.nome,
-    contaId,
+    id: uid(), tipo: 'despesa', valor, data,
+    descricao: r.nome, contaId,
     categoriaId: r.categoriaId || null,
     bemId: r.bemId || null,
     recorrenciaId: r.id,
@@ -1967,6 +3098,7 @@ document.getElementById('p-confirmar').addEventListener('click', () => {
   renderListaFixas();
   render();
   toast('Pagamento registrado');
+  vibrate(12);
 });
 
 document.getElementById('p-editar').addEventListener('click', () => {
@@ -1981,23 +3113,23 @@ document.getElementById('btn-abrir-fixas').addEventListener('click', () => {
   abrirFixas();
 });
 
-/* ============================================================
+/* =====================================================================
    CATEGORIAS
-   ============================================================ */
+   ===================================================================== */
 function renderConfigCategorias() {
   const el = document.getElementById('config-categorias');
-  const grupos = ['receita','despesa'];
+  const grupos = ['receita', 'despesa'];
   el.innerHTML = grupos.map(t => {
     const cats = DB.categorias.filter(c => c.tipo === t);
     return `
-      <div style="margin-top:8px;">
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:600;margin:8px 4px 4px;">${t === 'receita' ? 'Receitas' : 'Despesas'}</div>
+      <div style="margin-top:6px;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin:8px 4px 4px;">${t === 'receita' ? 'Receitas' : 'Despesas'}</div>
         ${cats.length ? '<div class="list">' + cats.map(c => `
-          <div class="list-item" onclick="abrirCategoria('${esc(c.id)}')">
-            <div class="li-icon" style="background:${esc(c.cor)};width:28px;height:28px;font-size:12px;">${esc(c.nome.charAt(0).toUpperCase())}</div>
+          <div class="list-item tappable" onclick="abrirCategoria('${esc(c.id)}')">
+            <div class="li-icon" style="background:${esc(c.cor)};width:28px;height:28px;font-size:12px;">${esc((c.nome[0] || '?').toUpperCase())}</div>
             <div class="li-body"><div class="li-title">${esc(c.nome)}</div></div>
           </div>
-        `).join('') + '</div>' : '<div style="color:var(--muted);font-size:13px;text-align:center;padding:8px;">Nenhuma</div>'}
+        `).join('') + '</div>' : '<div class="muted-text" style="text-align:center;padding:8px;">Nenhuma</div>'}
       </div>`;
   }).join('');
 }
@@ -2028,7 +3160,7 @@ function abrirCategoria(id) {
 
 document.getElementById('cat-salvar').addEventListener('click', () => {
   const nome = document.getElementById('cat-nome').value.trim();
-  if (!nome) { toast('Informe um nome'); return; }
+  if (!nome) { toast('Informe um nome', 'err'); return; }
   const tipo = document.getElementById('cat-tipo').value;
   if (editingCategoriaId) {
     const c = DB.categorias.find(x => x.id === editingCategoriaId);
@@ -2042,68 +3174,114 @@ document.getElementById('cat-salvar').addEventListener('click', () => {
   render();
 });
 
-document.getElementById('cat-excluir').addEventListener('click', () => {
+document.getElementById('cat-excluir').addEventListener('click', async () => {
   if (!editingCategoriaId) return;
-  const usado = DB.lancamentos.some(l => l.categoriaId === editingCategoriaId);
-  if (usado) { toast('Categoria em uso. Edite os lançamentos primeiro.'); return; }
-  if (!confirm('Excluir esta categoria?')) return;
+  const usadoL = DB.lancamentos.some(l => l.categoriaId === editingCategoriaId);
+  const usadoR = DB.recorrencias.some(r => r.categoriaId === editingCategoriaId);
+  if (usadoL || usadoR) {
+    toast('Categoria em uso. Edite os itens antes.', 'err');
+    return;
+  }
+  const ok = await confirmDialog({
+    title: 'Excluir categoria?',
+    msg: 'A categoria será removida permanentemente.',
+    okText: 'Excluir', danger: true
+  });
+  if (!ok) return;
   DB.categorias = DB.categorias.filter(c => c.id !== editingCategoriaId);
   saveDB();
   closeModal('modal-categoria');
   renderConfigCategorias();
 });
 
-/* ============================================================
-   CONFIG — exportar/importar/reset
-   ============================================================ */
+/* =====================================================================
+   CONFIG — Export/Import/Reset
+   ===================================================================== */
 document.getElementById('btn-config').addEventListener('click', () => {
   renderConfigCategorias();
   renderPinStatus();
+  document.getElementById('about-version').textContent = 'Versão ' + APP_VERSION;
   openModal('modal-config');
 });
 
 document.getElementById('btn-nova-categoria').addEventListener('click', abrirCategoriaNova);
 
 document.getElementById('btn-exportar').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(DB, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `financas-backup-${hoje()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  try {
+    const payload = { ...DB, exportedAt: new Date().toISOString(), appVersion: APP_VERSION };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `financas-backup-${hoje()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Backup gerado');
+  } catch (e) {
+    toast('Erro ao exportar', 'err');
+    console.error(e);
+  }
 });
 
 document.getElementById('btn-importar').addEventListener('click', () => {
   document.getElementById('file-importar').click();
 });
 
-document.getElementById('file-importar').addEventListener('change', e => {
+document.getElementById('file-importar').addEventListener('change', async (e) => {
   const file = e.target.files[0];
+  e.target.value = '';
   if (!file) return;
-  if (!confirm('Substituir todos os dados atuais pelo arquivo?')) return;
+  const ok = await confirmDialog({
+    title: 'Substituir todos os dados?',
+    msg: 'O conteúdo atual será sobrescrito pelo arquivo. Faça um backup antes se quiser preservar.',
+    okText: 'Importar', danger: true
+  });
+  if (!ok) return;
   const reader = new FileReader();
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
-      if (!data.contas || !data.lancamentos || !data.categorias) throw new Error('Formato inválido');
-      DB = data;
+      if (!Array.isArray(data.contas) || !Array.isArray(data.lancamentos) || !Array.isArray(data.categorias)) {
+        throw new Error('Estrutura inválida');
+      }
+      // Cria DB limpo a partir do importado, preenchendo defaults
+      const novo = {
+        version: 1,
+        contas: data.contas,
+        bens: Array.isArray(data.bens) ? data.bens : [],
+        categorias: data.categorias,
+        lancamentos: data.lancamentos,
+        recorrencias: Array.isArray(data.recorrencias) ? data.recorrencias : []
+      };
+      DB = novo;
       saveDB();
+      closeModal('modal-config');
       render();
-      renderConfigCategorias();
-      toast('Importado');
+      toast('Importado com sucesso');
     } catch (err) {
-      toast('Arquivo inválido');
+      toast('Arquivo inválido', 'err');
       console.error(err);
     }
   };
+  reader.onerror = () => toast('Falha ao ler arquivo', 'err');
   reader.readAsText(file);
-  e.target.value = '';
 });
 
-document.getElementById('btn-reset').addEventListener('click', () => {
-  if (!confirm('Apagar TODOS os dados? Não tem como desfazer.')) return;
-  if (!confirm('Tem certeza mesmo? Faça um backup antes.')) return;
+document.getElementById('btn-reset').addEventListener('click', async () => {
+  const ok = await confirmDialog({
+    title: 'Apagar tudo?',
+    msg: 'Todos os dados deste aparelho serão perdidos. Exporte um backup antes.',
+    okText: 'Apagar tudo', danger: true
+  });
+  if (!ok) return;
+  const ok2 = await confirmDialog({
+    title: 'Tem certeza?',
+    msg: 'Esta ação não pode ser desfeita.',
+    okText: 'Sim, apagar', danger: true
+  });
+  if (!ok2) return;
   localStorage.removeItem(DB_KEY);
   DB = loadDB();
   saveDB();
@@ -2112,57 +3290,28 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   toast('Tudo apagado');
 });
 
-/* ============================================================
-   EVENTOS PRINCIPAIS
-   ============================================================ */
-document.getElementById('prev-month').addEventListener('click', () => { currentMes = navMes(currentMes, -1); render(); });
-document.getElementById('next-month').addEventListener('click', () => { currentMes = navMes(currentMes, 1); render(); });
-
-document.querySelectorAll('.nav-item[data-view]').forEach(n => {
-  n.addEventListener('click', () => setView(n.dataset.view));
-});
-
-document.getElementById('fab-lancar').addEventListener('click', abrirLancamentoNovo);
-document.getElementById('btn-nova-conta').addEventListener('click', abrirContaNova);
-document.getElementById('btn-novo-bem').addEventListener('click', abrirBemNovo);
-
-document.querySelectorAll('#lanc-filters .chip').forEach(c => {
-  c.addEventListener('click', () => {
-    document.querySelectorAll('#lanc-filters .chip').forEach(x => x.classList.remove('active'));
-    c.classList.add('active');
-    currentLancFilter = c.dataset.filter;
-    renderLancamentos();
-  });
-});
-
-/* Permite digitar valor monetário */
-document.getElementById('l-valor').addEventListener('input', e => {
-  let v = e.target.value.replace(/[^\d,]/g, '');
-  e.target.value = v;
-});
-
-/* ============================================================
+/* =====================================================================
    PIN / LOCK SCREEN
-   ============================================================ */
+   ===================================================================== */
 let lockBuffer = '';
-let lockMode = 'unlock'; // 'unlock' | 'set-new' | 'set-confirm' | 'change-current' | 'remove-current'
+let lockMode = 'unlock';
 let lockTempPin = '';
 let lockFailures = 0;
 let lockBlockedUntil = 0;
+let lockBlockTimer = null;
 
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 function pinSalt() {
-  let s = localStorage.getItem('financas:pinSalt:v1');
-  if (!s) { s = uid() + uid(); localStorage.setItem('financas:pinSalt:v1', s); }
+  let s = localStorage.getItem(PIN_SALT_KEY);
+  if (!s) { s = uid() + uid() + uid(); localStorage.setItem(PIN_SALT_KEY, s); }
   return s;
 }
 
 async function hashPin(pin) { return await sha256(pinSalt() + pin); }
-
 function hasPin() { return !!localStorage.getItem(PIN_KEY); }
 
 function showLock(mode = 'unlock') {
@@ -2196,6 +3345,22 @@ function shakeLock() {
   const el = document.getElementById('lock-screen');
   el.classList.add('shake');
   setTimeout(() => el.classList.remove('shake'), 400);
+  vibrate(60);
+}
+
+function startBlockTimer() {
+  if (lockBlockTimer) clearInterval(lockBlockTimer);
+  lockBlockTimer = setInterval(() => {
+    const left = Math.ceil((lockBlockedUntil - Date.now()) / 1000);
+    if (left <= 0) {
+      clearInterval(lockBlockTimer);
+      lockBlockTimer = null;
+      lockFailures = 0;
+      showLock(lockMode || 'unlock');
+    } else {
+      document.getElementById('lock-subtitle').textContent = `Tente novamente em ${left}s`;
+    }
+  }, 500);
 }
 
 async function handlePinComplete() {
@@ -2204,11 +3369,10 @@ async function handlePinComplete() {
     const tryHash = await hashPin(lockBuffer);
     if (tryHash === stored) {
       lockFailures = 0;
-      if (lockMode === 'unlock') {
-        hideLock();
-      } else if (lockMode === 'change-current') {
-        showLock('set-new');
-      } else if (lockMode === 'remove-current') {
+      vibrate(10);
+      if (lockMode === 'unlock') hideLock();
+      else if (lockMode === 'change-current') showLock('set-new');
+      else if (lockMode === 'remove-current') {
         localStorage.removeItem(PIN_KEY);
         hideLock();
         renderPinStatus();
@@ -2221,13 +3385,7 @@ async function handlePinComplete() {
       shakeLock();
       if (lockFailures >= 5) {
         lockBlockedUntil = Date.now() + 30000;
-        document.getElementById('lock-subtitle').textContent = 'Tente novamente em 30s';
-        setTimeout(() => {
-          if (Date.now() >= lockBlockedUntil) {
-            lockFailures = 0;
-            showLock(lockMode);
-          }
-        }, 30000);
+        startBlockTimer();
       }
     }
   } else if (lockMode === 'set-new') {
@@ -2240,6 +3398,7 @@ async function handlePinComplete() {
       hideLock();
       renderPinStatus();
       toast('PIN ativado');
+      vibrate(12);
     } else {
       lockBuffer = '';
       updateLockDots();
@@ -2257,12 +3416,14 @@ document.querySelectorAll('#lock-pad .pad-key').forEach(btn => {
     if (k === 'del') {
       lockBuffer = lockBuffer.slice(0, -1);
       updateLockDots();
+      vibrate(3);
     } else if (k === 'cancel') {
       hideLock();
     } else if (/^\d$/.test(k)) {
       if (lockBuffer.length >= 4) return;
       lockBuffer += k;
       updateLockDots();
+      vibrate(3);
       if (lockBuffer.length === 4) {
         setTimeout(handlePinComplete, 120);
       }
@@ -2273,8 +3434,8 @@ document.querySelectorAll('#lock-pad .pad-key').forEach(btn => {
 function renderPinStatus() {
   const ativo = hasPin();
   document.getElementById('pin-status').innerHTML = ativo
-    ? '<div style="color:var(--muted);font-size:13px;padding:8px 4px;">✓ PIN ativo — exigido na abertura do app</div>'
-    : '<div style="color:var(--muted);font-size:13px;padding:8px 4px;">Sem PIN — qualquer um com seu celular vê os dados</div>';
+    ? '<div class="muted-text" style="padding:6px 4px;display:flex;align-items:center;gap:6px;"><svg class="ic ic-sm" style="color:var(--tint);"><use href="#i-lock"/></svg>PIN ativo — exigido na abertura do app</div>'
+    : '<div class="muted-text" style="padding:6px 4px;">Sem PIN — qualquer um com seu celular vê os dados</div>';
   const btn = document.getElementById('btn-pin-toggle');
   btn.textContent = ativo ? 'Desativar PIN' : 'Ativar PIN de acesso';
   document.getElementById('btn-pin-alterar').style.display = ativo ? 'block' : 'none';
@@ -2291,17 +3452,120 @@ document.getElementById('btn-pin-alterar').addEventListener('click', () => {
   showLock('change-current');
 });
 
-/* ============================================================
+/* =====================================================================
+   EVENTOS PRINCIPAIS
+   ===================================================================== */
+document.getElementById('prev-month').addEventListener('click', () => {
+  currentMes = navMes(currentMes, -1); render(); vibrate(3);
+});
+document.getElementById('next-month').addEventListener('click', () => {
+  currentMes = navMes(currentMes, 1); render(); vibrate(3);
+});
+document.getElementById('month-label').addEventListener('click', () => {
+  // toggle: se atual, sem efeito; se não, volta pra atual
+  const atual = mesIso();
+  if (currentMes !== atual) { currentMes = atual; render(); vibrate(6); }
+});
+
+document.querySelectorAll('.nav-item[data-view]').forEach(n => {
+  n.addEventListener('click', () => { vibrate(4); setView(n.dataset.view); });
+});
+
+document.getElementById('fab-lancar').addEventListener('click', () => { vibrate(6); abrirLancamentoNovo(); });
+document.getElementById('btn-nova-conta').addEventListener('click', abrirContaNova);
+document.getElementById('btn-novo-bem').addEventListener('click', abrirBemNovo);
+
+// Dashboard: tap nos cards
+document.querySelectorAll('.mes-card[data-filter]').forEach(c => {
+  c.addEventListener('click', () => {
+    setView('lancamentos');
+    currentLancFilter = c.dataset.filter;
+    currentLancSearch = '';
+    document.getElementById('lanc-search').value = '';
+    document.getElementById('lanc-search-wrap').classList.remove('has-text');
+    document.querySelectorAll('#lanc-filters .chip').forEach(x => x.classList.toggle('active', x.dataset.filter === c.dataset.filter));
+    renderLancamentos();
+  });
+});
+document.getElementById('st-ver-tudo').addEventListener('click', (e) => {
+  e.stopPropagation();
+  currentLancFilter = 'todos';
+  currentLancSearch = '';
+  document.getElementById('lanc-search').value = '';
+  document.getElementById('lanc-search-wrap').classList.remove('has-text');
+  document.querySelectorAll('#lanc-filters .chip').forEach(x => x.classList.toggle('active', x.dataset.filter === 'todos'));
+  setView('lancamentos');
+});
+document.getElementById('pd-contas-item').addEventListener('click', () => setView('contas'));
+document.getElementById('pd-bens-item').addEventListener('click', () => setView('bens'));
+
+// Filtros lançamentos
+document.querySelectorAll('#lanc-filters .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    vibrate(4);
+    document.querySelectorAll('#lanc-filters .chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    currentLancFilter = c.dataset.filter;
+    renderLancamentos();
+  });
+});
+
+// Search lançamentos
+const lancSearchEl = document.getElementById('lanc-search');
+const lancSearchWrap = document.getElementById('lanc-search-wrap');
+lancSearchEl.addEventListener('input', () => {
+  currentLancSearch = lancSearchEl.value.trim();
+  lancSearchWrap.classList.toggle('has-text', !!currentLancSearch);
+  renderLancamentos();
+});
+document.getElementById('lanc-search-clear').addEventListener('click', () => {
+  lancSearchEl.value = '';
+  currentLancSearch = '';
+  lancSearchWrap.classList.remove('has-text');
+  renderLancamentos();
+  lancSearchEl.focus();
+});
+
+// Aplica máscara aos inputs monetários ao boot
+applyCurrencyMask(document.getElementById('l-valor'));
+applyCurrencyMask(document.getElementById('c-saldo'));
+applyCurrencyMask(document.getElementById('b-valor'));
+applyCurrencyMask(document.getElementById('r-valor'));
+applyCurrencyMask(document.getElementById('p-valor'));
+
+// Header elevation on scroll
+const headerEl = document.getElementById('app-header');
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+  const s = window.scrollY;
+  headerEl.classList.toggle('elevated', s > 4);
+  lastScroll = s;
+}, { passive: true });
+
+/* =====================================================================
+   GLOBAIS (necessárias por usar onclick inline em HTML gerado)
+   ===================================================================== */
+window.abrirLancamento = abrirLancamento;
+window.abrirContaDetalhe = abrirContaDetalhe;
+window.abrirBemDetalhe = abrirBemDetalhe;
+window.acaoRecorrencia = acaoRecorrencia;
+window.abrirFixas = abrirFixas;
+window.abrirCategoria = abrirCategoria;
+window.filtrarPorCategoria = filtrarPorCategoria;
+
+/* =====================================================================
    BOOT
-   ============================================================ */
+   ===================================================================== */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // Verifica atualização sempre que o app abre
+      reg.update().catch(() => {});
+    }).catch(() => {});
   });
 }
 
 if (hasPin()) showLock('unlock');
-
 render();
 </script>
 </body>
