@@ -515,6 +515,75 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
 .stat-valor { font-size: 16px; font-weight: 600; margin-top: 2px; }
 
+/* ====== Lock Screen ====== */
+.lock-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.lock-screen.open { display: flex; }
+.lock-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(5,150,105,.3);
+}
+.lock-title { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+.lock-subtitle { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.lock-dots {
+  display: flex; gap: 14px;
+  margin: 32px 0;
+}
+.lock-dots .dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--card-2);
+  border: 1.5px solid var(--border);
+  transition: all .15s;
+}
+.lock-dots .dot.filled { background: var(--accent); border-color: var(--accent); }
+.lock-screen.shake .lock-dots { animation: shake .35s; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(8px); }
+}
+.pad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 16px;
+}
+.pad-key {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--text);
+  font-size: 26px;
+  font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow);
+}
+.pad-key:active { background: var(--card-2); transform: scale(.96); }
+.pad-key.del, .pad-key.action {
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.pad-key.del:active, .pad-key.action:active { background: var(--card-2); }
+
 /* ====== Toast ====== */
 .toast {
   position: fixed;
@@ -537,6 +606,29 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 </style>
 </head>
 <body>
+
+<div class="lock-screen" id="lock-screen">
+  <div class="lock-icon">◐</div>
+  <div class="lock-title">Finanças</div>
+  <div class="lock-subtitle" id="lock-subtitle">Digite seu PIN</div>
+  <div class="lock-dots" id="lock-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+  <div class="pad" id="lock-pad">
+    <button class="pad-key" data-key="1">1</button>
+    <button class="pad-key" data-key="2">2</button>
+    <button class="pad-key" data-key="3">3</button>
+    <button class="pad-key" data-key="4">4</button>
+    <button class="pad-key" data-key="5">5</button>
+    <button class="pad-key" data-key="6">6</button>
+    <button class="pad-key" data-key="7">7</button>
+    <button class="pad-key" data-key="8">8</button>
+    <button class="pad-key" data-key="9">9</button>
+    <button class="pad-key action" id="lock-cancel" data-key="cancel">Cancelar</button>
+    <button class="pad-key" data-key="0">0</button>
+    <button class="pad-key del" data-key="del">⌫</button>
+  </div>
+</div>
 
 <div id="app">
   <!-- Header -->
@@ -934,6 +1026,11 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     </div>
     <button class="btn-secondary" id="btn-abrir-fixas" style="margin-top: 8px;">Despesas fixas</button>
 
+    <div class="section-title">Segurança</div>
+    <div id="pin-status"></div>
+    <button class="btn-secondary" id="btn-pin-toggle">Ativar PIN de acesso</button>
+    <button class="btn-secondary" id="btn-pin-alterar" style="display:none;">Alterar PIN</button>
+
     <div class="section-title">Categorias</div>
     <div id="config-categorias"></div>
     <button class="add-row" id="btn-nova-categoria" style="margin-top: 10px;">+ Nova categoria</button>
@@ -951,6 +1048,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
    DADOS
    ============================================================ */
 const DB_KEY = 'financas:db:v1';
+const PIN_KEY = 'financas:pin:v1';
 const CORES = ['#059669','#10b981','#22c55e','#3b82f6','#6366f1','#8b5cf6','#ec4899','#f43f5e','#f59e0b','#d97706','#84cc16','#06b6d4','#64748b','#475569'];
 
 const DEFAULT_CATEGORIAS = [
@@ -1055,11 +1153,18 @@ function toast(msg) {
 /* ============================================================
    CÁLCULOS
    ============================================================ */
-function saldoConta(contaId) {
+function ultimoDiaMes(mes) {
+  const [y, m] = mes.split('-').map(Number);
+  return `${mes}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
+}
+
+function saldoConta(contaId, ateMes = null) {
   const c = DB.contas.find(x => x.id === contaId);
   if (!c) return 0;
+  const limite = ateMes ? ultimoDiaMes(ateMes) : null;
   let s = c.saldoInicial || 0;
   for (const l of DB.lancamentos) {
+    if (limite && l.data > limite) continue;
     if (l.tipo === 'receita' && l.contaId === contaId) s += l.valor;
     else if (l.tipo === 'despesa' && l.contaId === contaId) s -= l.valor;
     else if (l.tipo === 'transferencia') {
@@ -1072,11 +1177,13 @@ function saldoConta(contaId) {
   return s;
 }
 
-function valorBem(bemId) {
+function valorBem(bemId, ateMes = null) {
   const b = DB.bens.find(x => x.id === bemId);
   if (!b) return 0;
+  const limite = ateMes ? ultimoDiaMes(ateMes) : null;
   let v = b.valorInicial || 0;
   for (const l of DB.lancamentos) {
+    if (limite && l.data > limite) continue;
     if (l.tipo === 'investimento' && l.bemId === bemId) v += l.valor;
   }
   return v;
@@ -1180,11 +1287,14 @@ function render() {
 }
 
 function renderInicio() {
-  const totalContas = DB.contas.reduce((s,c) => s + saldoConta(c.id), 0);
-  const totalBens = DB.bens.reduce((s,b) => s + valorBem(b.id), 0);
+  const mesAtual = mesIso();
+  const ateMes = (currentMes < mesAtual) ? currentMes : null;
+  const totalContas = DB.contas.reduce((s,c) => s + saldoConta(c.id, ateMes), 0);
+  const totalBens = DB.bens.reduce((s,b) => s + valorBem(b.id, ateMes), 0);
   document.getElementById('patrimonio-valor').textContent = fmtBRL(totalContas + totalBens);
   document.getElementById('pd-contas').textContent = fmtBRL(totalContas);
   document.getElementById('pd-bens').textContent = fmtBRL(totalBens);
+  document.querySelector('.patrimonio-label').textContent = ateMes ? `Patrimônio no fim de ${nomeMes(currentMes)}` : 'Patrimônio total';
 
   const t = totaisDoMes(currentMes);
   document.getElementById('mes-receitas').textContent = fmtBRL(t.receitas);
@@ -1948,6 +2058,7 @@ document.getElementById('cat-excluir').addEventListener('click', () => {
    ============================================================ */
 document.getElementById('btn-config').addEventListener('click', () => {
   renderConfigCategorias();
+  renderPinStatus();
   openModal('modal-config');
 });
 
@@ -2031,6 +2142,156 @@ document.getElementById('l-valor').addEventListener('input', e => {
 });
 
 /* ============================================================
+   PIN / LOCK SCREEN
+   ============================================================ */
+let lockBuffer = '';
+let lockMode = 'unlock'; // 'unlock' | 'set-new' | 'set-confirm' | 'change-current' | 'remove-current'
+let lockTempPin = '';
+let lockFailures = 0;
+let lockBlockedUntil = 0;
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function pinSalt() {
+  let s = localStorage.getItem('financas:pinSalt:v1');
+  if (!s) { s = uid() + uid(); localStorage.setItem('financas:pinSalt:v1', s); }
+  return s;
+}
+
+async function hashPin(pin) { return await sha256(pinSalt() + pin); }
+
+function hasPin() { return !!localStorage.getItem(PIN_KEY); }
+
+function showLock(mode = 'unlock') {
+  lockMode = mode;
+  lockBuffer = '';
+  if (mode !== 'set-confirm') lockTempPin = '';
+  updateLockDots();
+  document.getElementById('lock-cancel').style.display = (mode === 'unlock') ? 'none' : '';
+  const sub = document.getElementById('lock-subtitle');
+  if (mode === 'unlock') sub.textContent = 'Digite seu PIN';
+  else if (mode === 'set-new') sub.textContent = 'Crie um PIN de 4 dígitos';
+  else if (mode === 'set-confirm') sub.textContent = 'Confirme o PIN';
+  else if (mode === 'change-current') sub.textContent = 'PIN atual';
+  else if (mode === 'remove-current') sub.textContent = 'Confirme seu PIN para desativar';
+  document.getElementById('lock-screen').classList.add('open');
+}
+
+function hideLock() {
+  document.getElementById('lock-screen').classList.remove('open');
+  lockBuffer = '';
+  lockMode = 'unlock';
+  lockTempPin = '';
+}
+
+function updateLockDots() {
+  const dots = document.querySelectorAll('#lock-dots .dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < lockBuffer.length));
+}
+
+function shakeLock() {
+  const el = document.getElementById('lock-screen');
+  el.classList.add('shake');
+  setTimeout(() => el.classList.remove('shake'), 400);
+}
+
+async function handlePinComplete() {
+  if (lockMode === 'unlock' || lockMode === 'change-current' || lockMode === 'remove-current') {
+    const stored = localStorage.getItem(PIN_KEY);
+    const tryHash = await hashPin(lockBuffer);
+    if (tryHash === stored) {
+      lockFailures = 0;
+      if (lockMode === 'unlock') {
+        hideLock();
+      } else if (lockMode === 'change-current') {
+        showLock('set-new');
+      } else if (lockMode === 'remove-current') {
+        localStorage.removeItem(PIN_KEY);
+        hideLock();
+        renderPinStatus();
+        toast('PIN desativado');
+      }
+    } else {
+      lockFailures++;
+      lockBuffer = '';
+      updateLockDots();
+      shakeLock();
+      if (lockFailures >= 5) {
+        lockBlockedUntil = Date.now() + 30000;
+        document.getElementById('lock-subtitle').textContent = 'Tente novamente em 30s';
+        setTimeout(() => {
+          if (Date.now() >= lockBlockedUntil) {
+            lockFailures = 0;
+            showLock(lockMode);
+          }
+        }, 30000);
+      }
+    }
+  } else if (lockMode === 'set-new') {
+    lockTempPin = lockBuffer;
+    showLock('set-confirm');
+  } else if (lockMode === 'set-confirm') {
+    if (lockBuffer === lockTempPin) {
+      const hash = await hashPin(lockBuffer);
+      localStorage.setItem(PIN_KEY, hash);
+      hideLock();
+      renderPinStatus();
+      toast('PIN ativado');
+    } else {
+      lockBuffer = '';
+      updateLockDots();
+      shakeLock();
+      document.getElementById('lock-subtitle').textContent = 'PINs não conferem. Tente de novo.';
+      setTimeout(() => showLock('set-new'), 800);
+    }
+  }
+}
+
+document.querySelectorAll('#lock-pad .pad-key').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    if (Date.now() < lockBlockedUntil) return;
+    const k = btn.dataset.key;
+    if (k === 'del') {
+      lockBuffer = lockBuffer.slice(0, -1);
+      updateLockDots();
+    } else if (k === 'cancel') {
+      hideLock();
+    } else if (/^\d$/.test(k)) {
+      if (lockBuffer.length >= 4) return;
+      lockBuffer += k;
+      updateLockDots();
+      if (lockBuffer.length === 4) {
+        setTimeout(handlePinComplete, 120);
+      }
+    }
+  });
+});
+
+function renderPinStatus() {
+  const ativo = hasPin();
+  document.getElementById('pin-status').innerHTML = ativo
+    ? '<div style="color:var(--muted);font-size:13px;padding:8px 4px;">✓ PIN ativo — exigido na abertura do app</div>'
+    : '<div style="color:var(--muted);font-size:13px;padding:8px 4px;">Sem PIN — qualquer um com seu celular vê os dados</div>';
+  const btn = document.getElementById('btn-pin-toggle');
+  btn.textContent = ativo ? 'Desativar PIN' : 'Ativar PIN de acesso';
+  document.getElementById('btn-pin-alterar').style.display = ativo ? 'block' : 'none';
+}
+
+document.getElementById('btn-pin-toggle').addEventListener('click', () => {
+  closeModal('modal-config');
+  if (hasPin()) showLock('remove-current');
+  else showLock('set-new');
+});
+
+document.getElementById('btn-pin-alterar').addEventListener('click', () => {
+  closeModal('modal-config');
+  showLock('change-current');
+});
+
+/* ============================================================
    BOOT
    ============================================================ */
 if ('serviceWorker' in navigator) {
@@ -2038,6 +2299,8 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
+if (hasPin()) showLock('unlock');
 
 render();
 </script>
