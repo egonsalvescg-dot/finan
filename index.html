@@ -410,6 +410,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   padding: 4px;
   margin: 12px 0;
 }
+.tipo-tabs.cols-2 { grid-template-columns: repeat(2, 1fr); }
 .tipo-tab {
   padding: var(--space-3) var(--space-1);
   min-height: var(--touch-min);
@@ -460,6 +461,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   transition: width .25s ease;
 }
 .fixas-bar-fill.full { background: var(--receita); }
+.fixas-bar-fill.despesa { background: var(--despesa); }
+.fixas-bar-fill.receita { background: var(--receita); }
 .badge-fixa {
   display: inline-block;
   background: var(--card-2);
@@ -1151,7 +1154,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     </div>
     <div id="fixas-mes-info" style="text-align:center;padding:8px 0 16px;color:var(--muted);font-size:13px;"></div>
     <div id="fixas-lista"></div>
-    <button class="add-row" id="btn-nova-recorrencia" style="margin-top: 10px;">+ Nova despesa fixa</button>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="add-row" id="btn-nova-despesa-fixa" style="flex:1;">+ Despesa fixa</button>
+      <button class="add-row" id="btn-nova-receita-fixa" style="flex:1;">+ Receita fixa</button>
+    </div>
   </div>
 </div>
 
@@ -1162,9 +1168,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
       <div class="modal-title" id="recorr-modal-title">Nova despesa fixa</div>
       <button class="modal-close" data-close="modal-recorrencia">Cancelar</button>
     </div>
+    <div class="tipo-tabs cols-2" id="r-tipo-tabs">
+      <div class="tipo-tab active" data-rtipo="despesa">Despesa</div>
+      <div class="tipo-tab" data-rtipo="receita">Receita</div>
+    </div>
     <div class="modal-section">
       <label>Descrição</label>
-      <input type="text" id="r-nome" placeholder="Ex: Aluguel, Luz, Internet, Netflix">
+      <input type="text" id="r-nome" placeholder="Ex: Aluguel, Luz, Salário, Aluguel recebido">
     </div>
     <div class="modal-section">
       <label>Valor sugerido</label>
@@ -1507,22 +1517,25 @@ function patrimonioTotal() {
 }
 
 function totaisDoMes(mes) {
-  let receitas = 0, despesas = 0, invest = 0, fixas = 0;
+  let receitas = 0, despesas = 0, invest = 0, despesasFixas = 0, receitasFixas = 0;
   for (const l of DB.lancamentos) {
     if (!mesPertence(l.data, mes)) continue;
-    if (l.tipo === 'receita') receitas += l.valor;
-    else if (l.tipo === 'despesa') {
+    if (l.tipo === 'receita') {
+      receitas += l.valor;
+      if (l.recorrenciaId) receitasFixas += l.valor;
+    } else if (l.tipo === 'despesa') {
       despesas += l.valor;
-      if (l.recorrenciaId) fixas += l.valor;
-    }
-    else if (l.tipo === 'investimento') invest += l.valor;
+      if (l.recorrenciaId) despesasFixas += l.valor;
+    } else if (l.tipo === 'investimento') invest += l.valor;
   }
   return {
     receitas: round2(receitas),
     despesas: round2(despesas),
     invest: round2(invest),
-    fixas: round2(fixas),
-    variaveis: round2(despesas - fixas),
+    fixas: round2(despesasFixas),          // backward-compat
+    despesasFixas: round2(despesasFixas),
+    receitasFixas: round2(receitasFixas),
+    variaveis: round2(despesas - despesasFixas),
     saldo: round2(receitas - despesas)
   };
 }
@@ -1569,6 +1582,7 @@ let editingBemId = null;
 let editingCategoriaId = null;
 let editingRecorrenciaId = null;
 let pagandoRecorrenciaId = null;
+let currentTipoRecorrencia = 'despesa';
 let currentTipoLanc = 'receita';
 let selectedCorConta = CORES[0];
 let selectedCorBem = CORES[2];
@@ -1678,28 +1692,57 @@ function renderFixasResumo() {
   const el = document.getElementById('fixas-resumo');
   if (!ativas.length) {
     el.innerHTML = `<div class="fixas-card" onclick="abrirFixas()">
-      <div style="color:var(--muted);font-size:13px;text-align:center;">Toque para cadastrar suas despesas fixas</div>
+      <div style="color:var(--muted);font-size:13px;text-align:center;">Toque para cadastrar suas fixas (despesas e receitas)</div>
     </div>`;
     return;
   }
-  const totalPrevisto = ativas.reduce((s, r) => s + (r.valor || 0), 0);
-  let totalPago = 0, pagas = 0;
-  for (const r of ativas) {
-    const l = recorrenciaPaga(r.id, currentMes);
-    if (l) { totalPago += l.valor; pagas++; }
-  }
-  const pct = totalPrevisto ? Math.min(100, Math.round(totalPago / totalPrevisto * 100)) : 0;
-  const completo = pagas === ativas.length && ativas.length > 0;
-  el.innerHTML = `<div class="fixas-card" onclick="abrirFixas()">
-    <div class="fixas-head">
-      <div>
-        <div class="fixas-total">${fmtBRL(totalPago)} <span style="color:var(--muted);font-weight:500;font-size:14px;">/ ${fmtBRL(totalPrevisto)}</span></div>
-        <div class="fixas-status">${pagas} de ${ativas.length} pagas neste mês</div>
+  const despesas = ativas.filter(r => (r.tipo || 'despesa') === 'despesa');
+  const receitas = ativas.filter(r => r.tipo === 'receita');
+  const stats = (lista) => {
+    const previsto = lista.reduce((s, r) => s + (r.valor || 0), 0);
+    let pago = 0, qtd = 0;
+    for (const r of lista) {
+      const l = recorrenciaPaga(r.id, currentMes);
+      if (l) { pago += l.valor; qtd++; }
+    }
+    return { previsto: round2(previsto), pago: round2(pago), qtd, total: lista.length };
+  };
+  const sd = stats(despesas);
+  const sr = stats(receitas);
+
+  // Layout: se só tem despesas (caso comum), mantém UI original; se tem receitas, mostra dois
+  if (receitas.length === 0) {
+    const pct = sd.previsto ? Math.min(100, Math.round(sd.pago / sd.previsto * 100)) : 0;
+    const completo = sd.qtd === sd.total && sd.total > 0;
+    el.innerHTML = `<div class="fixas-card" onclick="abrirFixas()">
+      <div class="fixas-head">
+        <div>
+          <div class="fixas-total">${fmtBRL(sd.pago)} <span style="color:var(--muted);font-weight:500;font-size:14px;">/ ${fmtBRL(sd.previsto)}</span></div>
+          <div class="fixas-status">${sd.qtd} de ${sd.total} pagas neste mês</div>
+        </div>
+        <div style="color:var(--accent);font-size:20px;">›</div>
       </div>
-      <div style="color:var(--accent);font-size:20px;">›</div>
-    </div>
-    <div class="fixas-bar"><div class="fixas-bar-fill ${completo ? 'full' : ''}" style="width:${pct}%;"></div></div>
-  </div>`;
+      <div class="fixas-bar"><div class="fixas-bar-fill ${completo ? 'full' : ''}" style="width:${pct}%;"></div></div>
+    </div>`;
+  } else {
+    // 2 mini-blocos lado a lado
+    const linha = (titulo, s, classe) => {
+      const pct = s.previsto ? Math.min(100, Math.round(s.pago / s.previsto * 100)) : 0;
+      const completo = s.qtd === s.total && s.total > 0;
+      return `<div style="flex:1;min-width:0;">
+        <div class="fixas-status" style="text-transform:uppercase;font-size:11px;font-weight:600;letter-spacing:.04em;">${titulo}</div>
+        <div class="fixas-total" style="font-size:18px;margin-top:2px;">${fmtBRL(s.pago)} <span style="color:var(--muted);font-weight:500;font-size:13px;">/ ${fmtBRL(s.previsto)}</span></div>
+        <div class="fixas-status" style="font-size:11px;">${s.qtd} de ${s.total}</div>
+        <div class="fixas-bar" style="margin-top:8px;"><div class="fixas-bar-fill ${classe} ${completo ? 'full' : ''}" style="width:${pct}%;"></div></div>
+      </div>`;
+    };
+    el.innerHTML = `<div class="fixas-card" onclick="abrirFixas()">
+      <div style="display:flex;gap:var(--space-4);">
+        ${despesas.length ? linha('Despesas', sd, 'despesa') : ''}
+        ${receitas.length ? linha('Receitas', sr, 'receita') : ''}
+      </div>
+    </div>`;
+  }
 }
 
 function renderLancamentos() {
@@ -2244,8 +2287,11 @@ function renderListaFixas() {
   if (!DB.recorrencias.length) {
     el.innerHTML = `<div class="empty">
       <div class="empty-icon">↻</div>
-      <div class="empty-msg">Nenhuma despesa fixa cadastrada</div>
-      <button class="empty-cta" onclick="abrirRecorrenciaNova()">+ Nova despesa fixa</button>
+      <div class="empty-msg">Nenhuma fixa cadastrada</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+        <button class="empty-cta" onclick="abrirRecorrenciaNova('despesa')">+ Despesa fixa</button>
+        <button class="empty-cta" style="background:var(--card);color:var(--accent);border:1px solid var(--accent);" onclick="abrirRecorrenciaNova('receita')">+ Receita fixa</button>
+      </div>
     </div>`;
     return;
   }
@@ -2254,17 +2300,23 @@ function renderListaFixas() {
     return (a.diaVencimento || 0) - (b.diaVencimento || 0);
   });
   el.innerHTML = '<div class="list">' + items.map(r => {
+    const tipo = r.tipo || 'despesa';
     const lanc = recorrenciaPaga(r.id, currentMes);
     const status = !r.ativa ? 'inativa' : (lanc ? 'paga' : 'pendente');
     const statusIcon = !r.ativa ? '–' : (lanc ? '✓' : String(r.diaVencimento || '?'));
     const cat = DB.categorias.find(c => c.id === r.categoriaId);
     const conta = DB.contas.find(c => c.id === r.contaId);
     const sub = [
+      tipo === 'receita' ? '+ receita' : null,
       `dia ${r.diaVencimento || '?'}`,
       cat?.nome,
       conta?.nome
     ].filter(Boolean).join(' · ');
     const valorMostrado = lanc ? lanc.valor : r.valor;
+    const valorClass = lanc ? (tipo === 'receita' ? 'pos' : 'neg') : 'neutral';
+    const statusText = lanc
+      ? (tipo === 'receita' ? 'recebida ' : 'paga ') + esc(fmtData(lanc.data))
+      : (r.ativa ? (tipo === 'receita' ? 'a receber' : 'pendente') : 'inativa');
     return `
       <div class="recorr-item" onclick="acaoRecorrencia('${esc(r.id)}')">
         <div class="recorr-status ${status}">${statusIcon}</div>
@@ -2273,8 +2325,8 @@ function renderListaFixas() {
           <div class="li-sub">${esc(sub)}</div>
         </div>
         <div class="li-right">
-          <div class="li-valor ${lanc ? 'neg' : 'neutral'}" style="${lanc ? '' : 'color:var(--muted);font-weight:500;'}">${fmtBRL(valorMostrado)}</div>
-          <div class="li-date">${lanc ? 'paga ' + esc(fmtData(lanc.data)) : (r.ativa ? 'pendente' : 'inativa')}</div>
+          <div class="li-valor ${valorClass}" style="${lanc ? '' : 'color:var(--muted);font-weight:500;'}">${fmtBRL(valorMostrado)}</div>
+          <div class="li-date">${statusText}</div>
         </div>
       </div>`;
   }).join('') + '</div>';
@@ -2294,16 +2346,16 @@ function acaoRecorrencia(rId) {
   }
 }
 
-function abrirRecorrenciaNova() {
+function abrirRecorrenciaNova(tipo = 'despesa') {
   if (!DB.contas.length) { toast('Crie uma conta primeiro'); return; }
   editingRecorrenciaId = null;
-  document.getElementById('recorr-modal-title').textContent = 'Nova despesa fixa';
+  document.getElementById('recorr-modal-title').textContent = tipo === 'receita' ? 'Nova receita fixa' : 'Nova despesa fixa';
   document.getElementById('r-nome').value = '';
   document.getElementById('r-valor').value = '';
   document.getElementById('r-dia').value = '';
   document.getElementById('r-excluir').style.display = 'none';
   document.getElementById('r-ativa').classList.add('on');
-  popularSelectsRecorrencia();
+  setTipoRecorrencia(tipo);
   openModal('modal-recorrencia');
 }
 
@@ -2311,13 +2363,14 @@ function abrirRecorrencia(rId) {
   const r = DB.recorrencias.find(x => x.id === rId);
   if (!r) return;
   editingRecorrenciaId = rId;
-  document.getElementById('recorr-modal-title').textContent = 'Editar despesa fixa';
+  const tipo = r.tipo || 'despesa';
+  document.getElementById('recorr-modal-title').textContent = tipo === 'receita' ? 'Editar receita fixa' : 'Editar despesa fixa';
   document.getElementById('r-nome').value = r.nome || '';
   document.getElementById('r-valor').value = (r.valor || 0).toString().replace('.', ',');
   document.getElementById('r-dia').value = r.diaVencimento || '';
   document.getElementById('r-excluir').style.display = 'block';
   document.getElementById('r-ativa').classList.toggle('on', !!r.ativa);
-  popularSelectsRecorrencia();
+  setTipoRecorrencia(tipo);
   document.getElementById('r-conta').value = r.contaId || '';
   document.getElementById('r-categoria').value = r.categoriaId || '';
   document.getElementById('r-bem').value = r.bemId || '';
@@ -2325,18 +2378,36 @@ function abrirRecorrencia(rId) {
 }
 
 function popularSelectsRecorrencia() {
+  const tipo = currentTipoRecorrencia;
   const original = editingRecorrenciaId ? DB.recorrencias.find(x => x.id === editingRecorrenciaId) : null;
   const contasAtivas = DB.contas.filter(c => !c.archived || c.id === original?.contaId);
   const contaOpts = contasAtivas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.archived ? ' (arquivada)' : ''}</option>`).join('');
   document.getElementById('r-conta').innerHTML = contaOpts;
-  const cats = DB.categorias.filter(c => c.tipo === 'despesa');
+  const cats = DB.categorias.filter(c => c.tipo === tipo);
   document.getElementById('r-categoria').innerHTML = cats.length
     ? cats.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('')
     : '<option value="">— sem categorias —</option>';
+  // Bem só faz sentido em despesa
+  const secBem = document.getElementById('r-bem').closest('.modal-section');
+  if (secBem) secBem.style.display = tipo === 'despesa' ? '' : 'none';
   const bensAtivos = DB.bens.filter(b => !b.archived || b.id === original?.bemId);
   document.getElementById('r-bem').innerHTML = '<option value="">— nenhum —</option>' +
     (bensAtivos.length ? bensAtivos.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}${b.archived ? ' (arquivado)' : ''}</option>`).join('') : '');
+  // Label do botão pagar reflete tipo
+  // (atualizado no abrirPagar)
 }
+
+function setTipoRecorrencia(tipo) {
+  currentTipoRecorrencia = tipo;
+  document.querySelectorAll('#r-tipo-tabs .tipo-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.rtipo === tipo)
+  );
+  popularSelectsRecorrencia();
+}
+
+document.querySelectorAll('#r-tipo-tabs .tipo-tab').forEach(t => {
+  t.addEventListener('click', () => setTipoRecorrencia(t.dataset.rtipo));
+});
 
 document.getElementById('r-ativa').addEventListener('click', () => {
   document.getElementById('r-ativa').classList.toggle('on');
@@ -2349,15 +2420,16 @@ document.getElementById('r-salvar').addEventListener('click', () => {
   const dia = parseInt(document.getElementById('r-dia').value, 10) || 1;
   const contaId = document.getElementById('r-conta').value;
   if (!contaId) { toast('Selecione uma conta'); return; }
+  const tipo = currentTipoRecorrencia;
   const categoriaId = document.getElementById('r-categoria').value || null;
-  const bemId = document.getElementById('r-bem').value || null;
+  const bemId = tipo === 'despesa' ? (document.getElementById('r-bem').value || null) : null;
   const ativa = document.getElementById('r-ativa').classList.contains('on');
   if (editingRecorrenciaId) {
     const r = DB.recorrencias.find(x => x.id === editingRecorrenciaId);
-    Object.assign(r, { nome, valor, diaVencimento: dia, contaId, categoriaId, bemId, ativa });
+    Object.assign(r, { nome, valor, diaVencimento: dia, contaId, categoriaId, bemId, ativa, tipo });
   } else {
     DB.recorrencias.push({
-      id: uid(), nome, valor, diaVencimento: dia,
+      id: uid(), nome, valor, diaVencimento: dia, tipo,
       contaId, categoriaId, bemId, ativa, criadaEm: Date.now()
     });
   }
@@ -2394,7 +2466,12 @@ document.getElementById('r-excluir').addEventListener('click', async () => {
 function abrirPagar(rId) {
   const r = DB.recorrencias.find(x => x.id === rId);
   if (!r) return;
+  const tipo = r.tipo || 'despesa';
   pagandoRecorrenciaId = rId;
+  document.querySelector('#modal-pagar .modal-title').textContent =
+    tipo === 'receita' ? 'Registrar recebimento' : 'Pagar despesa fixa';
+  document.getElementById('p-confirmar').textContent =
+    tipo === 'receita' ? 'Confirmar recebimento' : 'Confirmar pagamento';
   document.getElementById('p-desc').value = r.nome;
   document.getElementById('p-valor').value = (r.valor || 0).toString().replace('.', ',');
   document.getElementById('p-data').value = diaSeguroNoMes(currentMes, r.diaVencimento);
@@ -2414,7 +2491,8 @@ document.getElementById('p-confirmar').addEventListener('click', () => {
   const data = document.getElementById('p-data').value || hoje();
   const contaId = document.getElementById('p-conta').value;
   if (!contaId) { toast('Selecione uma conta'); return; }
-  // Idempotência: se já existe pagamento desta recorrência no mês da data, atualiza
+  const tipoRec = r.tipo || 'despesa';
+  // Idempotência: se já existe lançamento desta recorrência no mês, atualiza
   const mesDest = data.slice(0, 7);
   const existente = DB.lancamentos.find(l =>
     l.recorrenciaId === r.id && mesPertence(l.data, mesDest)
@@ -2423,21 +2501,22 @@ document.getElementById('p-confirmar').addEventListener('click', () => {
     existente.valor = valor;
     existente.data = data;
     existente.contaId = contaId;
-    toast('Pagamento atualizado');
+    existente.tipo = tipoRec;
+    toast(tipoRec === 'receita' ? 'Recebimento atualizado' : 'Pagamento atualizado');
   } else {
     DB.lancamentos.push({
       id: uid(),
-      tipo: 'despesa',
+      tipo: tipoRec,
       valor,
       data,
       descricao: r.nome,
       contaId,
       categoriaId: r.categoriaId || null,
-      bemId: r.bemId || null,
+      bemId: tipoRec === 'despesa' ? (r.bemId || null) : null,
       recorrenciaId: r.id,
       criadoEm: Date.now()
     });
-    toast('Pagamento registrado');
+    toast(tipoRec === 'receita' ? 'Recebimento registrado' : 'Pagamento registrado');
   }
   saveDB();
   closeModal('modal-pagar');
@@ -2451,7 +2530,8 @@ document.getElementById('p-editar').addEventListener('click', () => {
   if (rId) abrirRecorrencia(rId);
 });
 
-document.getElementById('btn-nova-recorrencia').addEventListener('click', abrirRecorrenciaNova);
+document.getElementById('btn-nova-despesa-fixa').addEventListener('click', () => abrirRecorrenciaNova('despesa'));
+document.getElementById('btn-nova-receita-fixa').addEventListener('click', () => abrirRecorrenciaNova('receita'));
 document.getElementById('btn-abrir-fixas').addEventListener('click', () => {
   closeModal('modal-config');
   abrirFixas();
