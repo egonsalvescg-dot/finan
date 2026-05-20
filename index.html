@@ -476,6 +476,59 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   text-transform: uppercase;
   letter-spacing: .04em;
 }
+.badge-auto {
+  display: inline-block;
+  background: rgba(217,119,6,.15);
+  color: var(--warning);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 100px;
+  margin-left: 4px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* Banner de lançamentos automáticos */
+.auto-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background: rgba(217,119,6,.08);
+  border: 1px solid rgba(217,119,6,.25);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  animation: confirmIn .25s ease;
+}
+.auto-banner-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(217,119,6,.18);
+  color: var(--warning);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.auto-banner-body { flex: 1; min-width: 0; }
+.auto-banner-title { font-weight: 600; font-size: var(--font-sm); }
+.auto-banner-msg { font-size: var(--font-xs); color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.auto-banner-actions { display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-end; flex-shrink: 0; }
+.auto-banner-btn {
+  background: var(--warning); color: #fff;
+  font-size: var(--font-xs); font-weight: 600;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  min-height: 32px;
+}
+.auto-banner-btn:active { opacity: .85; }
+.auto-banner-close {
+  width: 28px; height: 28px;
+  font-size: 14px;
+  color: var(--muted);
+  border-radius: 50%;
+}
+.auto-banner-close:active { background: var(--card-2); }
 .recorr-item {
   background: var(--card);
   padding: 12px 14px;
@@ -833,6 +886,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 
   <!-- View: Início -->
   <div class="view active" id="view-inicio">
+    <div class="auto-banner" id="auto-banner" style="display:none;">
+      <div class="auto-banner-icon">⚡</div>
+      <div class="auto-banner-body">
+        <div class="auto-banner-title" id="auto-banner-title">Lançamentos automáticos</div>
+        <div class="auto-banner-msg" id="auto-banner-msg"></div>
+      </div>
+      <div class="auto-banner-actions">
+        <button class="auto-banner-btn" id="auto-banner-ver">Ver</button>
+        <button class="auto-banner-close" id="auto-banner-close" aria-label="Fechar">✕</button>
+      </div>
+    </div>
     <div class="patrimonio-card">
       <div class="patrimonio-label">Patrimônio total</div>
       <div class="patrimonio-valor" id="patrimonio-valor">R$ 0,00</div>
@@ -1201,6 +1265,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
         <span>Ativa</span>
         <div class="toggle-switch on" id="r-ativa"></div>
       </div>
+      <div class="toggle">
+        <div>
+          <div>Lançar automaticamente</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Cria o lançamento sozinho no dia do vencimento</div>
+        </div>
+        <div class="toggle-switch" id="r-auto"></div>
+      </div>
     </div>
     <div class="modal-sticky-actions">
       <button class="btn-primary" id="r-salvar">Salvar</button>
@@ -1555,6 +1626,58 @@ function diaSeguroNoMes(mes, dia) {
   return `${mes}-${String(d).padStart(2, '0')}`;
 }
 
+/* Gera automaticamente lançamentos das recorrências marcadas como autoCreate
+ * para meses em que o vencimento já passou e ainda não há pagamento.
+ * Retorna lista dos lançamentos criados (pra notificar usuário). */
+function runAutoCreate() {
+  const criados = [];
+  const hojeIso = hoje();
+  const mesAtual = mesIso();
+  const MAX_MESES_RETROAGIR = 6;
+
+  for (const r of DB.recorrencias) {
+    if (!r.ativa || !r.autoCreate) continue;
+    // Calcula intervalo de meses a verificar: começa em criadaEm (ou 6 meses atrás), termina em mesAtual
+    const inicio = r.criadaEm ? new Date(r.criadaEm) : new Date();
+    let mesIter = mesIso(inicio);
+    // Limita retroatividade
+    const minMes = navMes(mesAtual, -MAX_MESES_RETROAGIR);
+    if (mesIter < minMes) mesIter = minMes;
+
+    while (mesIter <= mesAtual) {
+      const dataVencimento = diaSeguroNoMes(mesIter, r.diaVencimento);
+      // Só gera se o vencimento já passou ou é hoje
+      if (dataVencimento > hojeIso) { mesIter = navMes(mesIter, 1); continue; }
+      // Já existe lançamento dessa recorrência neste mês?
+      const jaExiste = DB.lancamentos.find(l =>
+        l.recorrenciaId === r.id && mesPertence(l.data, mesIter)
+      );
+      if (!jaExiste) {
+        const tipo = r.tipo || 'despesa';
+        const novo = {
+          id: uid(),
+          tipo,
+          valor: r.valor || 0,
+          data: dataVencimento,
+          descricao: r.nome,
+          contaId: r.contaId,
+          categoriaId: r.categoriaId || null,
+          bemId: tipo === 'despesa' ? (r.bemId || null) : null,
+          recorrenciaId: r.id,
+          autoCreated: true,
+          criadoEm: Date.now()
+        };
+        DB.lancamentos.push(novo);
+        criados.push({ lanc: novo, recorrencia: r });
+      }
+      mesIter = navMes(mesIter, 1);
+    }
+  }
+
+  if (criados.length) saveDB();
+  return criados;
+}
+
 function gastosPorCategoria(mes) {
   const map = {};
   for (const l of DB.lancamentos) {
@@ -1672,7 +1795,9 @@ function lancItemHTML(l) {
     const b = DB.bens.find(x => x.id === l.bemId);
     sub = `${o?.nome || '?'} → ${b?.nome || '?'}`;
   }
-  const selo = l.recorrenciaId ? '<span class="badge-fixa">fixa</span>' : '';
+  const selo = l.recorrenciaId
+    ? '<span class="badge-fixa">fixa</span>' + (l.autoCreated ? '<span class="badge-auto">auto</span>' : '')
+    : '';
   return `
     <div class="list-item" onclick="abrirLancamento('${esc(l.id)}')">
       <div class="li-icon" style="background:${cores[l.tipo]};">${sinais[l.tipo]}</div>
@@ -2355,6 +2480,7 @@ function abrirRecorrenciaNova(tipo = 'despesa') {
   document.getElementById('r-dia').value = '';
   document.getElementById('r-excluir').style.display = 'none';
   document.getElementById('r-ativa').classList.add('on');
+  document.getElementById('r-auto').classList.remove('on');
   setTipoRecorrencia(tipo);
   openModal('modal-recorrencia');
 }
@@ -2370,6 +2496,7 @@ function abrirRecorrencia(rId) {
   document.getElementById('r-dia').value = r.diaVencimento || '';
   document.getElementById('r-excluir').style.display = 'block';
   document.getElementById('r-ativa').classList.toggle('on', !!r.ativa);
+  document.getElementById('r-auto').classList.toggle('on', !!r.autoCreate);
   setTipoRecorrencia(tipo);
   document.getElementById('r-conta').value = r.contaId || '';
   document.getElementById('r-categoria').value = r.categoriaId || '';
@@ -2413,6 +2540,10 @@ document.getElementById('r-ativa').addEventListener('click', () => {
   document.getElementById('r-ativa').classList.toggle('on');
 });
 
+document.getElementById('r-auto').addEventListener('click', () => {
+  document.getElementById('r-auto').classList.toggle('on');
+});
+
 document.getElementById('r-salvar').addEventListener('click', () => {
   const nome = document.getElementById('r-nome').value.trim();
   if (!nome) { toast('Informe a descrição'); return; }
@@ -2424,13 +2555,14 @@ document.getElementById('r-salvar').addEventListener('click', () => {
   const categoriaId = document.getElementById('r-categoria').value || null;
   const bemId = tipo === 'despesa' ? (document.getElementById('r-bem').value || null) : null;
   const ativa = document.getElementById('r-ativa').classList.contains('on');
+  const autoCreate = document.getElementById('r-auto').classList.contains('on');
   if (editingRecorrenciaId) {
     const r = DB.recorrencias.find(x => x.id === editingRecorrenciaId);
-    Object.assign(r, { nome, valor, diaVencimento: dia, contaId, categoriaId, bemId, ativa, tipo });
+    Object.assign(r, { nome, valor, diaVencimento: dia, contaId, categoriaId, bemId, ativa, tipo, autoCreate });
   } else {
     DB.recorrencias.push({
       id: uid(), nome, valor, diaVencimento: dia, tipo,
-      contaId, categoriaId, bemId, ativa, criadaEm: Date.now()
+      contaId, categoriaId, bemId, ativa, autoCreate, criadaEm: Date.now()
     });
   }
   saveDB();
@@ -2995,9 +3127,32 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+function mostrarBannerAuto(criados) {
+  if (!criados || !criados.length) return;
+  const banner = document.getElementById('auto-banner');
+  const msgEl = document.getElementById('auto-banner-msg');
+  const titEl = document.getElementById('auto-banner-title');
+  titEl.textContent = `${criados.length} lançamento${criados.length>1?'s':''} automático${criados.length>1?'s':''}`;
+  const resumo = criados.slice(0, 3).map(c => `${c.recorrencia.nome} ${fmtBRL(c.lanc.valor)}`).join(', ');
+  const sufixo = criados.length > 3 ? ` e mais ${criados.length - 3}` : '';
+  msgEl.textContent = `Criados pra você: ${resumo}${sufixo}. Confira se algum precisa ajuste.`;
+  banner.style.display = 'flex';
+}
+
+document.getElementById('auto-banner-close').addEventListener('click', () => {
+  document.getElementById('auto-banner').style.display = 'none';
+});
+document.getElementById('auto-banner-ver').addEventListener('click', () => {
+  document.getElementById('auto-banner').style.display = 'none';
+  abrirFixas();
+});
+
 if (hasPin()) showLock('unlock');
 
+// Auto-create de recorrências antes do primeiro render
+const _autoCriados = runAutoCreate();
 render();
+mostrarBannerAuto(_autoCriados);
 </script>
 </body>
 </html>
