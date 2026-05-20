@@ -222,6 +222,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   display: flex; align-items: center; gap: 12px;
 }
 .list-item:active { background: var(--card-2); }
+.list-item.archived { opacity: .55; }
+.list-item.archived .li-icon { filter: grayscale(.4); }
 .li-icon {
   width: 38px; height: 38px;
   border-radius: 50%;
@@ -545,6 +547,18 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   margin-top: 10px;
 }
 .btn-danger:active { background: rgba(220,38,38,.08); }
+
+.btn-warning {
+  width: 100%;
+  background: transparent;
+  color: var(--warning);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: var(--font-sm);
+  margin-top: var(--space-2);
+}
+.btn-warning:active { background: rgba(217,119,6,.1); }
 
 .color-picker {
   display: flex; gap: var(--space-1); flex-wrap: wrap;
@@ -1026,6 +1040,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     </div>
     <div class="modal-sticky-actions">
       <button class="btn-primary" id="c-salvar">Salvar</button>
+      <button class="btn-warning" id="c-arquivar" style="display:none;">Arquivar conta</button>
       <button class="btn-danger" id="c-excluir" style="display:none;">Excluir conta</button>
     </div>
   </div>
@@ -1063,6 +1078,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     </div>
     <div class="modal-sticky-actions">
       <button class="btn-primary" id="b-salvar">Salvar</button>
+      <button class="btn-warning" id="b-arquivar" style="display:none;">Arquivar bem</button>
       <button class="btn-danger" id="b-excluir" style="display:none;">Excluir bem</button>
     </div>
   </div>
@@ -1713,16 +1729,24 @@ function renderContas() {
     </div>`;
     return;
   }
-  el.innerHTML = '<div class="list">' + DB.contas.map(c => `
-    <div class="list-item" onclick="abrirConta('${esc(c.id)}')">
+  const ativas = DB.contas.filter(c => !c.archived);
+  const arquivadas = DB.contas.filter(c => c.archived);
+  const itemHTML = (c) => `
+    <div class="list-item${c.archived ? ' archived' : ''}" onclick="abrirConta('${esc(c.id)}')">
       <div class="li-icon" style="background:${esc(c.cor)};">${esc(c.nome.charAt(0).toUpperCase())}</div>
       <div class="li-body">
         <div class="li-title">${esc(c.nome)}</div>
         <div class="li-sub">${esc(c.tipo || '')}</div>
       </div>
       <div class="li-right"><div class="li-valor neutral">${fmtBRL(saldoConta(c.id))}</div></div>
-    </div>
-  `).join('') + '</div>';
+    </div>`;
+  let html = '';
+  if (ativas.length) html += '<div class="list">' + ativas.map(itemHTML).join('') + '</div>';
+  if (arquivadas.length) {
+    html += '<div class="section-title" style="margin-top:24px;">Arquivadas</div>';
+    html += '<div class="list">' + arquivadas.map(itemHTML).join('') + '</div>';
+  }
+  el.innerHTML = html;
 }
 
 // Esconde botão "+ Nova" quando lista vazia (CTA fica no empty state)
@@ -1743,7 +1767,9 @@ function renderBens() {
     </div>`;
     return;
   }
-  el.innerHTML = '<div class="list">' + DB.bens.map(b => {
+  const ativos = DB.bens.filter(b => !b.archived);
+  const arquivados = DB.bens.filter(b => b.archived);
+  const itemHTML = (b) => {
     const valor = valorBem(b.id);
     const inv = totalInvestidoBem(b.id);
     const gastos = gastosBem(b.id);
@@ -1751,7 +1777,7 @@ function renderBens() {
     if (inv > 0) extra += ` · invest: ${fmtBRL(inv)}`;
     if (gastos > 0) extra += ` · gastos: ${fmtBRL(gastos)}`;
     return `
-      <div class="list-item" onclick="abrirBemDetalhe('${esc(b.id)}')">
+      <div class="list-item${b.archived ? ' archived' : ''}" onclick="abrirBemDetalhe('${esc(b.id)}')">
         <div class="li-icon" style="background:${esc(b.cor)};">${esc(b.nome.charAt(0).toUpperCase())}</div>
         <div class="li-body">
           <div class="li-title">${esc(b.nome)}</div>
@@ -1759,7 +1785,14 @@ function renderBens() {
         </div>
         <div class="li-right"><div class="li-valor neutral">${fmtBRL(valor)}</div></div>
       </div>`;
-  }).join('') + '</div>';
+  };
+  let html = '';
+  if (ativos.length) html += '<div class="list">' + ativos.map(itemHTML).join('') + '</div>';
+  if (arquivados.length) {
+    html += '<div class="section-title" style="margin-top:24px;">Arquivados</div>';
+    html += '<div class="list">' + arquivados.map(itemHTML).join('') + '</div>';
+  }
+  el.innerHTML = html;
 }
 
 /* ============================================================
@@ -1862,8 +1895,10 @@ function setTipoLanc(tipo) {
   show('sec-destino', tipo === 'transferencia');
   show('sec-bem', tipo === 'investimento');
 
-  // Popula selects
-  const contaOpts = DB.contas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)} — ${fmtBRL(saldoConta(c.id))}</option>`).join('');
+  // Popula selects — exclui arquivados, mas inclui o vinculado em edição
+  const original = editingLancId ? DB.lancamentos.find(x => x.id === editingLancId) : null;
+  const contasAtivas = DB.contas.filter(c => !c.archived || c.id === original?.contaId || c.id === original?.contaOrigemId || c.id === original?.contaDestinoId);
+  const contaOpts = contasAtivas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.archived ? ' (arquivada)' : ''} — ${fmtBRL(saldoConta(c.id))}</option>`).join('');
   document.getElementById('l-conta').innerHTML = contaOpts;
   document.getElementById('l-origem').innerHTML = contaOpts;
   document.getElementById('l-destino').innerHTML = contaOpts;
@@ -1873,12 +1908,13 @@ function setTipoLanc(tipo) {
     ? cats.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('')
     : '<option value="">— sem categorias —</option>';
 
-  const bemOpts = DB.bens.length
-    ? DB.bens.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}</option>`).join('')
+  const bensAtivos = DB.bens.filter(b => !b.archived || b.id === original?.bemId);
+  const bemOpts = bensAtivos.length
+    ? bensAtivos.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}${b.archived ? ' (arquivado)' : ''}</option>`).join('')
     : '<option value="">— nenhum bem —</option>';
   document.getElementById('l-bem').innerHTML = bemOpts;
   document.getElementById('l-bem-link').innerHTML = '<option value="">— nenhum —</option>' +
-    (DB.bens.length ? DB.bens.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}</option>`).join('') : '');
+    (bensAtivos.length ? bensAtivos.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}${b.archived ? ' (arquivado)' : ''}</option>`).join('') : '');
 }
 
 document.querySelectorAll('.tipo-tab').forEach(t => {
@@ -1971,6 +2007,7 @@ function abrirContaNova() {
   document.getElementById('c-tipo').value = '';
   document.getElementById('c-saldo').value = '';
   document.getElementById('c-excluir').style.display = 'none';
+  document.getElementById('c-arquivar').style.display = 'none';
   selectedCorConta = CORES[Math.floor(Math.random() * CORES.length)];
   renderColorPicker('c-cores', selectedCorConta, c => selectedCorConta = c);
   openModal('modal-conta');
@@ -1984,7 +2021,14 @@ function abrirConta(id) {
   document.getElementById('c-nome').value = c.nome;
   document.getElementById('c-tipo').value = c.tipo || '';
   document.getElementById('c-saldo').value = (c.saldoInicial || 0).toString().replace('.', ',');
-  document.getElementById('c-excluir').style.display = 'block';
+  // Excluir só se SEM histórico; Arquivar sempre disponível
+  const usado = DB.lancamentos.some(l =>
+    l.contaId === id || l.contaOrigemId === id || l.contaDestinoId === id
+  );
+  document.getElementById('c-excluir').style.display = usado ? 'none' : 'block';
+  const btnArq = document.getElementById('c-arquivar');
+  btnArq.style.display = 'block';
+  btnArq.textContent = c.archived ? 'Restaurar conta' : 'Arquivar conta';
   selectedCorConta = c.cor;
   renderColorPicker('c-cores', selectedCorConta, x => selectedCorConta = x);
   openModal('modal-conta');
@@ -2030,13 +2074,35 @@ document.getElementById('c-excluir').addEventListener('click', async () => {
   const usado = DB.lancamentos.some(l =>
     l.contaId === editingContaId || l.contaOrigemId === editingContaId || l.contaDestinoId === editingContaId
   );
-  if (usado) { toast('Conta usada em lançamentos. Exclua-os antes.'); return; }
+  if (usado) {
+    toast('Conta com histórico — use Arquivar em vez de Excluir');
+    return;
+  }
   const ok = await confirmDialog('Esta ação não pode ser desfeita.', { title: 'Excluir esta conta?', danger: true });
   if (!ok) return;
   DB.contas = DB.contas.filter(c => c.id !== editingContaId);
   saveDB();
   closeModal('modal-conta');
   render();
+});
+
+document.getElementById('c-arquivar').addEventListener('click', async () => {
+  if (!editingContaId) return;
+  const c = DB.contas.find(x => x.id === editingContaId);
+  if (!c) return;
+  const restaurando = !!c.archived;
+  const ok = await confirmDialog(
+    restaurando
+      ? 'A conta volta a aparecer nas listas e seleções.'
+      : 'Mantém o histórico mas esconde a conta das listas e seleções. Você pode restaurar depois.',
+    { title: restaurando ? 'Restaurar conta?' : 'Arquivar conta?', warning: !restaurando, okText: restaurando ? 'Restaurar' : 'Arquivar' }
+  );
+  if (!ok) return;
+  c.archived = !c.archived;
+  saveDB();
+  closeModal('modal-conta');
+  render();
+  toast(restaurando ? 'Restaurada' : 'Arquivada');
 });
 
 /* ============================================================
@@ -2049,6 +2115,7 @@ function abrirBemNovo() {
   document.getElementById('b-tipo').value = '';
   document.getElementById('b-valor').value = '';
   document.getElementById('b-excluir').style.display = 'none';
+  document.getElementById('b-arquivar').style.display = 'none';
   selectedCorBem = CORES[Math.floor(Math.random() * CORES.length)];
   renderColorPicker('b-cores', selectedCorBem, c => selectedCorBem = c);
   openModal('modal-bem');
@@ -2062,7 +2129,12 @@ function abrirBem(id) {
   document.getElementById('b-nome').value = b.nome;
   document.getElementById('b-tipo').value = b.tipo || '';
   document.getElementById('b-valor').value = (b.valorInicial || 0).toString().replace('.', ',');
-  document.getElementById('b-excluir').style.display = 'block';
+  // Excluir só se SEM histórico
+  const usado = DB.lancamentos.some(l => l.bemId === id);
+  document.getElementById('b-excluir').style.display = usado ? 'none' : 'block';
+  const btnArq = document.getElementById('b-arquivar');
+  btnArq.style.display = 'block';
+  btnArq.textContent = b.archived ? 'Restaurar bem' : 'Arquivar bem';
   selectedCorBem = b.cor;
   renderColorPicker('b-cores', selectedCorBem, c => selectedCorBem = c);
   openModal('modal-bem');
@@ -2102,7 +2174,10 @@ document.getElementById('b-salvar').addEventListener('click', async () => {
 document.getElementById('b-excluir').addEventListener('click', async () => {
   if (!editingBemId) return;
   const usado = DB.lancamentos.some(l => l.bemId === editingBemId);
-  if (usado) { toast('Bem vinculado a lançamentos. Exclua-os antes.'); return; }
+  if (usado) {
+    toast('Bem com histórico — use Arquivar em vez de Excluir');
+    return;
+  }
   const ok = await confirmDialog('Esta ação não pode ser desfeita.', { title: 'Excluir este bem?', danger: true });
   if (!ok) return;
   DB.bens = DB.bens.filter(b => b.id !== editingBemId);
@@ -2110,6 +2185,26 @@ document.getElementById('b-excluir').addEventListener('click', async () => {
   closeModal('modal-bem');
   closeModal('modal-bem-detalhe');
   render();
+});
+
+document.getElementById('b-arquivar').addEventListener('click', async () => {
+  if (!editingBemId) return;
+  const b = DB.bens.find(x => x.id === editingBemId);
+  if (!b) return;
+  const restaurando = !!b.archived;
+  const ok = await confirmDialog(
+    restaurando
+      ? 'O bem volta a aparecer nas listas e seleções.'
+      : 'Mantém o histórico mas esconde o bem das listas e seleções. Você pode restaurar depois.',
+    { title: restaurando ? 'Restaurar bem?' : 'Arquivar bem?', warning: !restaurando, okText: restaurando ? 'Restaurar' : 'Arquivar' }
+  );
+  if (!ok) return;
+  b.archived = !b.archived;
+  saveDB();
+  closeModal('modal-bem');
+  closeModal('modal-bem-detalhe');
+  render();
+  toast(restaurando ? 'Restaurado' : 'Arquivado');
 });
 
 function abrirBemDetalhe(id) {
@@ -2230,14 +2325,17 @@ function abrirRecorrencia(rId) {
 }
 
 function popularSelectsRecorrencia() {
-  const contaOpts = DB.contas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('');
+  const original = editingRecorrenciaId ? DB.recorrencias.find(x => x.id === editingRecorrenciaId) : null;
+  const contasAtivas = DB.contas.filter(c => !c.archived || c.id === original?.contaId);
+  const contaOpts = contasAtivas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.archived ? ' (arquivada)' : ''}</option>`).join('');
   document.getElementById('r-conta').innerHTML = contaOpts;
   const cats = DB.categorias.filter(c => c.tipo === 'despesa');
   document.getElementById('r-categoria').innerHTML = cats.length
     ? cats.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('')
     : '<option value="">— sem categorias —</option>';
+  const bensAtivos = DB.bens.filter(b => !b.archived || b.id === original?.bemId);
   document.getElementById('r-bem').innerHTML = '<option value="">— nenhum —</option>' +
-    (DB.bens.length ? DB.bens.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}</option>`).join('') : '');
+    (bensAtivos.length ? bensAtivos.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}${b.archived ? ' (arquivado)' : ''}</option>`).join('') : '');
 }
 
 document.getElementById('r-ativa').addEventListener('click', () => {
@@ -2300,7 +2398,8 @@ function abrirPagar(rId) {
   document.getElementById('p-desc').value = r.nome;
   document.getElementById('p-valor').value = (r.valor || 0).toString().replace('.', ',');
   document.getElementById('p-data').value = diaSeguroNoMes(currentMes, r.diaVencimento);
-  const contaOpts = DB.contas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)} — ${fmtBRL(saldoConta(c.id))}</option>`).join('');
+  const contasAtivas = DB.contas.filter(c => !c.archived || c.id === r.contaId);
+  const contaOpts = contasAtivas.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.archived ? ' (arquivada)' : ''} — ${fmtBRL(saldoConta(c.id))}</option>`).join('');
   document.getElementById('p-conta').innerHTML = contaOpts;
   document.getElementById('p-conta').value = r.contaId || DB.contas[0]?.id || '';
   openModal('modal-pagar');
