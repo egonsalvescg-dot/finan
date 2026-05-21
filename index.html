@@ -999,7 +999,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     <button class="pad-key" data-key="9">9</button>
     <button class="pad-key action" id="lock-cancel" data-key="cancel">Cancelar</button>
     <button class="pad-key" data-key="0">0</button>
-    <button class="pad-key del" data-key="del">⌫</button>
+    <button class="pad-key del" data-key="del" aria-label="Apagar dígito">⌫</button>
   </div>
 </div>
 
@@ -1155,7 +1155,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 
     <div class="modal-section">
       <label>Data</label>
-      <input type="date" id="l-data">
+      <input type="date" id="l-data" aria-label="Data do lançamento">
     </div>
 
     <!-- Receita/Despesa -->
@@ -1414,15 +1414,15 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     </div>
     <div class="modal-section">
       <label>Descrição</label>
-      <input type="text" id="p-desc" disabled>
+      <input type="text" id="p-desc" aria-label="Descrição" disabled>
     </div>
     <div class="modal-section">
       <label>Valor pago</label>
-      <input type="text" inputmode="decimal" id="p-valor">
+      <input type="text" inputmode="decimal" id="p-valor" aria-label="Valor pago">
     </div>
     <div class="modal-section">
       <label>Data do pagamento</label>
-      <input type="date" id="p-data">
+      <input type="date" id="p-data" aria-label="Data do pagamento">
     </div>
     <div class="modal-section">
       <label>Conta</label>
