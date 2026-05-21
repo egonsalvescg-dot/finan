@@ -14,6 +14,7 @@ SUITES = [
     ('Sintaxe',                'test_syntax.py'),
     ('Segurança',              'test_security.py'),
     ('Acessibilidade',         'test_a11y.py'),
+    ('Visual / Layout',        'test_visual.py'),
     ('Performance',            'test_performance.py'),
     ('Integridade de dados',   'test_data.py'),
     ('PWA',                    'test_pwa.py'),
